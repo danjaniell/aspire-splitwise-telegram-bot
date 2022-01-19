@@ -130,10 +130,16 @@ def format_data(user_data: Dict[str, str]) -> str:
     return "\n".join(data).join(["\n", "\n"])
 
 
+def date_today() -> str:
+    today = datetime.now(tz=ZoneInfo("Hongkong"))
+    today = str(today.strftime('%m/%d/%y'))
+    return today
+
+
 @bot.message_handler(regexp='^(D|d)one$', restrict=True)
 async def done(message):
     """Display gathered info"""
-    user_data["Date"] = datetime.today().strftime('%m/%d/%Y')
+    user_data["Date"] = date_today()
     await bot.send_message(
         message.chat.id, "[Received Data]" + f"\n{format_data(user_data)}")
 
