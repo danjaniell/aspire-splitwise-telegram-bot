@@ -1,0 +1,15 @@
+currency = "₱"
+
+[gsheet]
+gsheet_api_key_filepath = ""
+gsheet_worksheet_id = ""
+
+[telegram]
+telegram_token = ""
+restrict_access = false
+list_of_users = [] # Comma separated list of user ids
+
+[app]
+update_mode = ""
+app_name = ""
+port = 
