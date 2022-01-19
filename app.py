@@ -63,10 +63,11 @@ def get_config() -> dict[str, str]:
 
     if ON_HEROKU:
         # get the heroku port
-        configuration['port'] = int(os.environ.get('PORT', '8443'))
-        configuration['token'] = os.environ.get('TOKEN')
-        configuration['update_mode'] = os.environ.get('UPDATE_MODE')
-        configuration['app_name'] = os.environ.get('HEROKU_APP_NAME')
+        configuration['port'] = os.environ.get('PORT', '8443')
+        configuration['token'] = os.environ.get('TOKEN', 'token')
+        configuration['update_mode'] = os.environ.get('UPDATE_MODE', 'polling')
+        configuration['app_name'] = os.environ.get(
+            'HEROKU_APP_NAME', 'heroku_app_name')
     else:
         configuration['port'] = config["app"]["port"]
         configuration['token'] = config["telegram"]["telegram_token"]
@@ -134,7 +135,7 @@ async def done(message):
     """Display gathered info"""
     user_data["Date"] = datetime.today().strftime('%m/%d/%Y')
     await bot.send_message(
-        message.chat.id, f"\[Received Data]\n{format_data(user_data)}")
+        message.chat.id, "[Received Data]" + f"\n{format_data(user_data)}")
 
     await upload(message)
 
@@ -151,17 +152,15 @@ async def upload(message):
     ]
     append_trx(sheet, upload_data)
     clear_user_data()
-    await bot.reply_to(message, f"✅ Transaction Saved\n")
+    await bot.reply_to(message, "✅ Transaction Saved\n")
 
 
 @bot.message_handler(regexp='^(A|a)dd(I|i)nc.+$', restrict=True)
 async def income_trx(message):
     """Add income transaction using Today's date, Inflow Amount and Memo"""
     text = message.text
-    result = []
+    result = list(shlex.split(text))
 
-    for i in shlex.split(text):
-        result.append(i)
     del result[0]
 
     paramCount = len(result)
@@ -181,10 +180,8 @@ async def income_trx(message):
 async def expense_trx(message):
     """Add expense transaction using Today's date, Outflow Amount and Memo"""
     text = message.text
-    result = []
+    result = list(shlex.split(text))
 
-    for i in shlex.split(text):
-        result.append(i)
     del result[0]
 
     paramCount = len(result)
