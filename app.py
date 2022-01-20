@@ -75,8 +75,8 @@ class App():
         """
         Cancel transaction from any state
         """
+        await di[MyTeleBot].Instance.delete_state(message.chat.id)
         await di[MyTeleBot].Instance.send_message(message.chat.id, 'Transaction cancelled.')
-        await di[MyTeleBot].Instance.current_states.finish(message.chat.id)
 
     @di[MyTeleBot].Instance.message_handler(state=[Action.outflow, Action.inflow], is_digit=False)
     async def invalid_amt(message):
@@ -172,24 +172,28 @@ class App():
         user_id = call.from_user.id
         message_id = call.message.message_id
 
-        await App.item_selected(action, user_id, message_id)
+        if (action == Action.end):
+            await di[MyTeleBot].Instance.delete_state(call.message.chat.id)
+            await di[MyTeleBot].Instance.edit_message_text(chat_id=user_id, message_id=message_id, text='Transaction cancelled.')
+        else:
+            await App.item_selected(action, user_id, message_id)
 
-    @di[MyTeleBot].Instance.message_handler(state=Action.outflow, restrict=True)
+    @ di[MyTeleBot].Instance.message_handler(state=Action.outflow, restrict=True)
     async def get_outflow(message):
         di[TransactionData]['Outflow'] = message.text
 
-    @di[MyTeleBot].Instance.callback_query_handler(func=lambda c: c.data == 'save')
+    @ di[MyTeleBot].Instance.callback_query_handler(func=lambda c: c.data == 'save')
     async def save_callback(call: types.CallbackQuery):
         await di[MyTeleBot].Instance.set_state(call.from_user.id, Action.start)
         await di[MyTeleBot].Instance.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                                        text='Update:', reply_markup=KeyboardUtil.create_options_keyboard())
 
-    @di[MyTeleBot].Instance.callback_query_handler(func=lambda c: c.data == 'quick_save')
+    @ di[MyTeleBot].Instance.callback_query_handler(func=lambda c: c.data == 'quick_save')
     async def savequick_callback(call: types.CallbackQuery):
-        await di[MyTeleBot].Instance.current_states.finish(call.from_user.id)
+        await di[MyTeleBot].Instance.delete_state(call.message.chat.id)
         await App.upload(call.message)
 
-    @di[MyTeleBot].Instance.message_handler(commands=['start', 's'], restrict=True)
+    @ di[MyTeleBot].Instance.message_handler(commands=['start', 's'], restrict=True)
     async def command_start(message):
         """
         Start the conversation and ask user for input.
