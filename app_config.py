@@ -19,6 +19,8 @@ class Configuration():
             'app_name': '',
             'restrict_access': False,
             'list_of_users': [],
+            'credentials_json_path': '',
+            'worksheet_id': '',
         }
 
         ON_HEROKU = os.environ.get('ON_HEROKU')
@@ -34,6 +36,9 @@ class Configuration():
             config['restrict_access'] = os.environ.get(
                 'RESTRICT_ACCESS', False)
             config['list_of_users'] = os.environ.get('USER_IDS', [])
+            config['credentials_json_path'] = os.environ.get(
+                'CREDENTIALS_FILE_PATH', [])
+            config['worksheet_id'] = os.environ.get('WORKSHEET_ID', [])
         else:
             config['currency'] = self.file_config['currency']
             config['port'] = self.file_config['app']['port']
@@ -42,6 +47,8 @@ class Configuration():
             config['app_name'] = self.file_config['app']['app_name']
             config['restrict_access'] = self.file_config['telegram']['restrict_access']
             config['list_of_users'] = self.file_config['telegram']['list_of_users']
+            config['credentials_json_path'] = self.file_config['gsheet']['gsheet_api_key_filepath']
+            config['worksheet_id'] = self.file_config['gsheet']['gsheet_worksheet_id']
 
         return config
 

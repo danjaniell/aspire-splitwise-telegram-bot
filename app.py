@@ -1,8 +1,10 @@
 import shlex
+import app_logging
 import asyncio
+import gspread
+import aspire_util
 from kink import inject, di
 from app_config import Configuration
-import app_logging
 from aspire_util import append_trx
 from telebot.async_telebot import AsyncTeleBot
 from telebot.callback_data import CallbackData
@@ -19,15 +21,32 @@ from services import (
     IsDigitFilter,
     ActionsCallbackFilter
 )
-from gspread_helper import GSpreadHelper
+from gspread import Client, Spreadsheet
 
 
 def configure_services() -> None:
     """
     Setup services into the container for dependency injection
     """
-    di[Configuration] = Configuration()
-    di[AsyncTeleBot] = AsyncTeleBot(token=di[Configuration].values['token'],
+    trx_data = {
+        'Date': '',
+        'Outflow': '',
+        'Inflow': '',
+        'Category': '',
+        'Account': '',
+        'Memo': '',
+    }
+
+    scope = [
+        'https://spreadsheets.google.com/feeds',
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/drive',
+    ]
+
+    di[Configuration] = Configuration().values
+    di[TransactionData] = TransactionData(trx_data)
+    di[AsyncTeleBot] = AsyncTeleBot(token=di[Configuration]['token'],
                                     parse_mode='MARKDOWN',
                                     exception_handler=app_logging.ExceptionHandler())
     di[Restrict_Access] = Restrict_Access()
@@ -37,6 +56,14 @@ def configure_services() -> None:
     di[MyTeleBot] = MyTeleBot()
     di[CallbackData] = CallbackData('action_id', prefix='Action')
     di[KeyboardUtil] = KeyboardUtil()
+    di[Formatting] = Formatting()
+    di[Client] = gspread.service_account(
+        filename=di[Configuration]['credentials_json_path'], scopes=scope)
+    di[Spreadsheet] = di[Client].open_by_key(
+        di[Configuration]['worksheet_id'])
+    di['trx_accounts'] = [
+        item for sublist in aspire_util.get_accounts(di[Spreadsheet]) for item in sublist
+    ]
 
 
 configure_services()
@@ -59,27 +86,28 @@ class App():
         await di[MyTeleBot].Instance.set_state(message.from_user.id, Action.quick_end)
         await di[MyTeleBot].Instance.send_message(message.chat.id,
                                                   '\[Received Data]' +
-                                                  f'\n{Formatting.format_data(TransactionData.values)}',
+                                                  f'\n{di[Formatting].format_data(di[TransactionData])}',
                                                   reply_markup=KeyboardUtil.create_save_keyboard('quick_save'))
 
     async def upload(message):
         """Upload info to aspire google sheet"""
+        x = di[TransactionData]
         upload_data = [
-            TransactionData.values['Date'],
-            TransactionData.values['Outflow'],
-            TransactionData.values['Inflow'],
-            TransactionData.values['Category'],
-            TransactionData.values['Account'],
-            TransactionData.values['Memo'],
+            di[TransactionData]['Date'],
+            di[TransactionData]['Outflow'],
+            di[TransactionData]['Inflow'],
+            di[TransactionData]['Category'],
+            di[TransactionData]['Account'],
+            di[TransactionData]['Memo'],
         ]
-        append_trx(GSpreadHelper.sheet, upload_data)
-        TransactionData.clear_transaction_data()
+        append_trx(di[Spreadsheet], upload_data)
+        di[TransactionData].reset()
         await di[MyTeleBot].Instance.reply_to(message, '✅ Transaction Saved\n')
 
     @di[MyTeleBot].Instance.message_handler(regexp='^(A|a)dd(I|i)nc.+$', restrict=True)
     async def income_trx(message):
         """Add income transaction using Today's date, Inflow Amount and Memo"""
-        TransactionData.clear_transaction_data()
+        di[TransactionData].reset()
         text = message.text
         result = list(shlex.split(text))
 
@@ -92,16 +120,16 @@ class App():
             return
         else:
             inflow, memo = result
-            TransactionData.values['Date'] = DateUtil.date_today()
-            TransactionData.values['Inflow'] = inflow
-            TransactionData.values['Memo'] = memo
+            di[TransactionData]['Date'] = DateUtil.date_today()
+            di[TransactionData]['Inflow'] = inflow
+            di[TransactionData]['Memo'] = memo
 
         await App.quick_save(message)
 
     @di[MyTeleBot].Instance.message_handler(regexp='^(A|a)dd(E|e)xp.+$', restrict=True)
     async def expense_trx(message):
         """Add expense transaction using Today's date, Outflow Amount and Memo"""
-        TransactionData.clear_transaction_data()
+        di[TransactionData].reset()
         text = message.text
         result = list(shlex.split(text))
 
@@ -114,18 +142,18 @@ class App():
             return
         else:
             outflow, memo = result
-            TransactionData.values['Date'] = DateUtil.date_today()
-            TransactionData.values['Outflow'] = outflow
-            TransactionData.values['Memo'] = memo
+            di[TransactionData]['Date'] = DateUtil.date_today()
+            di[TransactionData]['Outflow'] = outflow
+            di[TransactionData]['Memo'] = memo
 
         await App.quick_save(message)
 
     async def item_selected(action: Action, user_id, message_id):
         await di[MyTeleBot].Instance.set_state(user_id, action)
 
-        data = TransactionData.values[action.name.capitalize()]
+        data = di[TransactionData][action.name.capitalize()]
         if action == Action.outflow or action == Action.inflow:
-            displayData = (Configuration.values['currency'] +
+            displayData = (di[Configuration]['currency'] +
                            f' {data}') if data != '' else '\'\''
         else:
             displayData = data if data != '' else '\'\''
@@ -148,7 +176,7 @@ class App():
 
     @di[MyTeleBot].Instance.message_handler(state=Action.outflow, restrict=True)
     async def get_outflow(message):
-        TransactionData.values['Outflow'] = message.text
+        di[TransactionData]['Outflow'] = message.text
 
     @di[MyTeleBot].Instance.callback_query_handler(func=lambda c: c.data == 'save')
     async def save_callback(call: types.CallbackQuery):

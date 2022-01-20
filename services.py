@@ -13,21 +13,18 @@ from telebot import types
 from kink import inject, di
 from enum import IntEnum
 from zoneinfo import ZoneInfo
-from typing import Dict
+from typing import Any, Dict
 
 
 @inject
 class Restrict_Access(SimpleCustomFilter):
     key = 'restrict'
 
-    def __init__(self, config: Configuration):
-        self._config = config
-
     @staticmethod
     async def check(message: types.Message):
         return (
-            di[Configuration].values['restrict_access']
-            and message.from_user.id in di[Configuration].values['list_of_users']
+            di[Configuration]['restrict_access']
+            and message.from_user.id in di[Configuration]['list_of_users']
         )
 
 
@@ -43,13 +40,12 @@ class MyTeleBot(AsyncTeleBot):
     Instance = None
 
     def __init__(self,
-                 config: Configuration,
                  restrict_access_filter: Restrict_Access,
                  state_filter: StateFilter,
                  is_digit_filter: IsDigitFilter,
                  actions_callback_filter: ActionsCallbackFilter,
                  bot_instance: AsyncTeleBot):
-        self._config = config
+        self._config = di[Configuration]
         self._restrict_access_filter = restrict_access_filter
         self._state_filter = state_filter
         self._is_digit_filter = is_digit_filter
@@ -75,16 +71,13 @@ class Action(IntEnum):
 
 @inject
 class Formatting():
-    def __init__(self, config: Configuration):
-        self._config = config
-
     def format_data(self, user_data: Dict[str, str]) -> str:
         """Helper function for formatting the gathered user info."""
         data = []
         for key, value in user_data.items():
             if key in ('Outflow', 'Inflow') and value != '':
                 data.append(f'*{key}* : ' +
-                            self._config.values['currency'] + f' {int(value):,}')
+                            di[Configuration]['currency'] + f' {int(value):,}')
             else:
                 data.append(f'*{key}* : {value}')
         return '\n'.join(data).join(['\n', '\n'])
@@ -97,19 +90,14 @@ class DateUtil():
         return today
 
 
-class TransactionData():
-    values = {
-        'Date': '',
-        'Outflow': '',
-        'Inflow': '',
-        'Category': '',
-        'Account': '',
-        'Memo': '',
-    }
-
-    def clear_transaction_data(self) -> None:
-        empty_user_data = {key: '' for key in self.values}
-        self.values = empty_user_data
+class TransactionData(dict[str, Any]):
+    def reset(self):
+        self['Date'] = ''
+        self['Outflow'] = ''
+        self['Inflow'] = ''
+        self['Category'] = ''
+        self['Account'] = ''
+        self['Memo'] = ''
 
 
 class KeyboardUtil():
@@ -156,7 +144,7 @@ class KeyboardUtil():
                 data = TransactionData.values[action.name.capitalize()]
                 if action == Action.outflow or action == Action.inflow:
                     displayData = f'{action.name.capitalize()}: ' + \
-                        (di[Configuration].values['currency'] +
+                        (di[Configuration]['currency'] +
                          f' {data}') if data != '' else action.name.capitalize()
                 else:
                     displayData = f'{action.name.capitalize()}: ' + \
