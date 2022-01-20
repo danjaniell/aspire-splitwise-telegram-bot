@@ -342,7 +342,7 @@ async def save_callback(call: types.CallbackQuery):
 @ bot.callback_query_handler(func=lambda c: c.data == 'quick_save')
 async def savequick_callback(call: types.CallbackQuery):
     await bot.current_states.finish(call.from_user.id)
-    # await upload(call.message)
+    await upload(call.message)
 
 
 @ bot.message_handler(commands=['start', 's'], restrict=True)
