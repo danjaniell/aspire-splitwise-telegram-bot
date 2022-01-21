@@ -64,11 +64,12 @@ def configure_services() -> None:
     di['trx_accounts'] = [
         item for sublist in aspire_util.get_accounts(di[Spreadsheet]) for item in sublist
     ]
+    di['WEBHOOK_URL_BASE'] = di[Configuration]['webhook_base_url']
 
 
 configure_services()
 
-WEBHOOK_URL_BASE = "https://%s.herokuapp.com" % (di[Configuration]['app_name'])
+WEBHOOK_URL_BASE = di['WEBHOOK_URL_BASE']
 WEBHOOK_URL_PATH = "/%s/" % (di[Configuration]['secret'])
 
 app = Flask(__name__)

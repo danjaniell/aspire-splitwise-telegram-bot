@@ -22,6 +22,7 @@ class Configuration():
             'list_of_users': [],
             'credentials_json': {},
             'worksheet_id': '',
+            'webhook_base_url': '',
         }
 
         ON_HEROKU = os.environ.get('ON_HEROKU')
@@ -36,7 +37,7 @@ class Configuration():
             config['update_mode'] = os.environ.get(
                 'UPDATE_MODE', 'polling')
             config['app_name'] = os.environ.get(
-                'HEROKU_APP_NAME', 'heroku_app_name')
+                'APP_NAME', 'app_name')
             config['restrict_access'] = os.environ.get(
                 'RESTRICT_ACCESS', False)
             config['list_of_users'] = [int(i) for i in list(
@@ -57,6 +58,13 @@ class Configuration():
             config['credentials_json'] = json.loads(base64.b64decode(
                 file_config['gsheet']['credentials_json']))
             config['worksheet_id'] = file_config['gsheet']['gsheet_worksheet_id']
+
+        if ON_HEROKU:
+            config['webhook_base_url'] = "https://%s.herokuapp.com" % (
+                config['app_name'])
+        elif ON_PYTHONANYWHERE:
+            config['webhook_base_url'] = "https://%s.pythonanywhere.com" % (
+                config['app_name'])
 
         return config
 
