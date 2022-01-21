@@ -1,6 +1,7 @@
+from logging import Logger
 import time
 import flask
-import app_logging
+import telebot
 import asyncio
 import aspire_util
 from flask import Flask
@@ -17,7 +18,8 @@ from services import (
     Restrict_Access,
     StateFilter,
     IsDigitFilter,
-    ActionsCallbackFilter
+    ActionsCallbackFilter,
+    ExceptionHandler
 )
 from gspread import auth, Client, Spreadsheet
 
@@ -41,12 +43,12 @@ def configure_services() -> None:
         'https://www.googleapis.com/auth/drive.file',
         'https://www.googleapis.com/auth/drive',
     ]
-
+    di[Logger] = telebot.logger
     di[Configuration] = Configuration().values
     di[TransactionData] = TransactionData(trx_data)
     di[AsyncTeleBot] = AsyncTeleBot(token=di[Configuration]['token'],
                                     parse_mode='MARKDOWN',
-                                    exception_handler=app_logging.ExceptionHandler())
+                                    exception_handler=ExceptionHandler())
     di[Restrict_Access] = Restrict_Access()
     di[StateFilter] = StateFilter(di[AsyncTeleBot])
     di[IsDigitFilter] = IsDigitFilter()

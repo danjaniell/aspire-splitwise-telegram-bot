@@ -1,3 +1,4 @@
+import telebot
 from app_config import Configuration
 from datetime import datetime
 from telebot.async_telebot import AsyncTeleBot
@@ -12,9 +13,14 @@ from kink import inject, di
 from enum import IntEnum
 from zoneinfo import ZoneInfo
 from typing import Any, Dict
+from logging import Logger
 
 
-@inject
+class ExceptionHandler(telebot.ExceptionHandler):
+    def handle(self, exception):
+        di[Logger].error(exception)
+
+
 class Restrict_Access(SimpleCustomFilter):
     key = 'restrict'
 
@@ -67,7 +73,6 @@ class Action(IntEnum):
     quick_end = 102
 
 
-@inject
 class Formatting():
     def format_data(self, user_data: Dict[str, str]) -> str:
         """Helper function for formatting the gathered user info."""
