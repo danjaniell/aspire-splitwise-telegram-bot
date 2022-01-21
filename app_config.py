@@ -13,7 +13,7 @@ class Configuration():
     def read_config(self) -> dict[str, str]:
         config = {
             'currency': '',
-            'port': '',
+            'port': 0,
             'token': '',
             'secret': '',
             'update_mode': '',
@@ -32,7 +32,7 @@ class Configuration():
 
         if ON_HEROKU or ON_DOCKER or ON_PYTHONANYWHERE:
             config['currency'] = os.environ.get('CURRENCY', '₱')
-            config['port'] = os.environ.get('PORT', '8443')
+            config['port'] = int(os.environ.get('PORT', '8443'))
             config['token'] = os.environ.get('TOKEN', 'no_token')
             config['secret'] = os.environ.get('SECRET', 'no_secret')
             config['update_mode'] = os.environ.get(
@@ -49,7 +49,7 @@ class Configuration():
         else:
             file_config = toml.load('config.toml')
             config['currency'] = file_config['currency']
-            config['port'] = file_config['app']['port']
+            config['port'] = int(file_config['app']['port'])
             config['token'] = file_config['telegram']['telegram_token']
             config['secret'] = file_config['app']['secret']
             config['update_mode'] = file_config['app']['update_mode']
