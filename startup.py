@@ -80,7 +80,7 @@ def start():
         drop_pending_updates=True))
     time.sleep(0.1)
     if (di[Configuration]['update_mode'] == 'polling'):
-        asyncio.run(di[MyTeleBot].Instance.polling(skip_pending=True))
+        asyncio.run(di[MyTeleBot].Instance.infinity_polling(skip_pending=True))
     elif (di[Configuration]['update_mode'] == 'webhook'):
         asyncio.run(di[MyTeleBot].Instance.set_webhook(
             url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH))
