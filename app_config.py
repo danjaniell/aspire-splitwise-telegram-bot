@@ -1,4 +1,3 @@
-from calendar import c
 import os
 import toml
 import base64
@@ -9,7 +8,6 @@ class Configuration():
     def __init__(self):
         self.get_values()
 
-    file_config = toml.load('config.toml')
     values = {}
 
     def read_config(self) -> dict[str, str]:
@@ -44,16 +42,17 @@ class Configuration():
                 os.environ.get('CREDENTIALS', '')))
             config['worksheet_id'] = os.environ.get('WORKSHEET_ID', '')
         else:
-            config['currency'] = self.file_config['currency']
-            config['port'] = self.file_config['app']['port']
-            config['token'] = self.file_config['telegram']['telegram_token']
-            config['update_mode'] = self.file_config['app']['update_mode']
-            config['app_name'] = self.file_config['app']['app_name']
-            config['restrict_access'] = self.file_config['telegram']['restrict_access']
-            config['list_of_users'] = self.file_config['telegram']['list_of_users']
+            file_config = toml.load('config.toml')
+            config['currency'] = file_config['currency']
+            config['port'] = file_config['app']['port']
+            config['token'] = file_config['telegram']['telegram_token']
+            config['update_mode'] = file_config['app']['update_mode']
+            config['app_name'] = file_config['app']['app_name']
+            config['restrict_access'] = file_config['telegram']['restrict_access']
+            config['list_of_users'] = file_config['telegram']['list_of_users']
             config['credentials_json'] = json.loads(base64.b64decode(
-                self.file_config['gsheet']['credentials_json']))
-            config['worksheet_id'] = self.file_config['gsheet']['gsheet_worksheet_id']
+                file_config['gsheet']['credentials_json']))
+            config['worksheet_id'] = file_config['gsheet']['gsheet_worksheet_id']
 
         return config
 
