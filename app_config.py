@@ -26,8 +26,9 @@ class Configuration():
 
         ON_HEROKU = os.environ.get('ON_HEROKU')
         ON_DOCKER = os.environ.get('ON_DOCKER')
+        ON_PYTHONANYWHERE = os.environ.get('ON_PYTHONANYWHERE')
 
-        if ON_HEROKU or ON_DOCKER:
+        if ON_HEROKU or ON_DOCKER or ON_PYTHONANYWHERE:
             config['currency'] = os.environ.get('CURRENCY', '₱')
             config['port'] = os.environ.get('PORT', '8443')
             config['token'] = os.environ.get('TOKEN', 'no_token')
