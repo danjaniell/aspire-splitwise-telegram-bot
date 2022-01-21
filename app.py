@@ -1,4 +1,9 @@
+import startup
 import shlex
+import asyncio
+import time
+import flask
+from flask import Flask
 from kink import di
 from app_config import Configuration
 from aspire_util import append_trx
@@ -13,7 +18,6 @@ from services import (
     MyTeleBot
 )
 from gspread import Spreadsheet
-from startup import app
 from gevent.pywsgi import WSGIServer
 
 
@@ -150,10 +154,39 @@ class App():
         await di[MyTeleBot].Instance.send_message(message.chat.id, 'Select Option:', reply_markup=KeyboardUtil.create_default_options_keyboard())
 
 
+WEBHOOK_URL_BASE = di['WEBHOOK_URL_BASE']
+WEBHOOK_URL_PATH = "/%s/" % (di[Configuration]['secret'])
+
+app = Flask(__name__)
+
+
+@app.route('/start', methods=['GET'])
+def start():
+    asyncio.run(di[MyTeleBot].Instance.delete_webhook(
+        drop_pending_updates=True))
+    time.sleep(0.1)
+    if (di[Configuration]['update_mode'] == 'polling'):
+        asyncio.run(di[MyTeleBot].Instance.infinity_polling(skip_pending=True))
+    elif (di[Configuration]['update_mode'] == 'webhook'):
+        asyncio.run(di[MyTeleBot].Instance.set_webhook(
+            url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH))
+    return 'Bot started.'
+
+
+@app.route(WEBHOOK_URL_PATH, methods=['POST'])
+def webhook():
+    if flask.request.headers.get('content-type') == 'application/json':
+        json_string = flask.request.get_data().decode('utf-8')
+        update = types.Update.de_json(json_string)
+        asyncio.run(di[MyTeleBot].Instance.process_new_updates([update]))
+        return ''
+    else:
+        flask.abort(403)
+
+
 def start_server():
     http_server = WSGIServer(('', di[Configuration]['port']), app)
     http_server.serve_forever()
 
 
-if __name__ == '__main__':
-    start_server()
+start_server()

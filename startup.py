@@ -1,13 +1,8 @@
 from logging import Logger
-import time
-import flask
 import telebot
-import asyncio
 import aspire_util
-from flask import Flask
 from kink import di
 from app_config import Configuration
-from telebot import types
 from telebot.async_telebot import AsyncTeleBot
 from telebot.callback_data import CallbackData
 from services import (
@@ -68,32 +63,3 @@ def configure_services() -> None:
 
 
 configure_services()
-
-WEBHOOK_URL_BASE = di['WEBHOOK_URL_BASE']
-WEBHOOK_URL_PATH = "/%s/" % (di[Configuration]['secret'])
-
-app = Flask(__name__)
-
-
-@app.route('/start', methods=['GET'])
-def start():
-    asyncio.run(di[MyTeleBot].Instance.delete_webhook(
-        drop_pending_updates=True))
-    time.sleep(0.1)
-    if (di[Configuration]['update_mode'] == 'polling'):
-        asyncio.run(di[MyTeleBot].Instance.infinity_polling(skip_pending=True))
-    elif (di[Configuration]['update_mode'] == 'webhook'):
-        asyncio.run(di[MyTeleBot].Instance.set_webhook(
-            url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH))
-    return 'Bot started.'
-
-
-@app.route(WEBHOOK_URL_PATH, methods=['POST'])
-def webhook():
-    if flask.request.headers.get('content-type') == 'application/json':
-        json_string = flask.request.get_data().decode('utf-8')
-        update = types.Update.de_json(json_string)
-        asyncio.run(di[MyTeleBot].Instance.process_new_updates([update]))
-        return ''
-    else:
-        flask.abort(403)
