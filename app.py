@@ -150,6 +150,10 @@ class App():
         await di[MyTeleBot].Instance.send_message(message.chat.id, 'Select Option:', reply_markup=KeyboardUtil.create_default_options_keyboard())
 
 
-if __name__ == '__main__':
+def start_server():
     http_server = WSGIServer(('', di[Configuration]['port']), app)
     http_server.serve_forever()
+
+
+if __name__ == '__main__':
+    start_server()
