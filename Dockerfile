@@ -16,4 +16,4 @@ COPY . ./
 EXPOSE $PORT
 
 #Run the command
-CMD exec gunicorn --log-level=info --worker 2 --threads 8 --bind :$PORT --timeout 0 app:app
+CMD exec gunicorn --log-level=info --workers 1 --threads 8 --bind :$PORT --timeout 0 app:app
