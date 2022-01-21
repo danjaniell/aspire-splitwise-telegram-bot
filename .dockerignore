@@ -1,0 +1,5 @@
+__pycache__/
+*.json
+*.cmd
+config.toml
+test.env
