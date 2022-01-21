@@ -189,4 +189,5 @@ def start_server():
     http_server.serve_forever()
 
 
-start_server()
+if __name__ == '__main__':
+    start_server()
