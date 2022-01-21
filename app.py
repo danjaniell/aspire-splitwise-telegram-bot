@@ -1,12 +1,7 @@
 import shlex
-import app_logging
-import asyncio
-import gspread
-import aspire_util
-from kink import inject, di
+from kink import di
 from app_config import Configuration
 from aspire_util import append_trx
-from telebot.async_telebot import AsyncTeleBot
 from telebot.callback_data import CallbackData
 from telebot import types
 from services import (
@@ -15,58 +10,11 @@ from services import (
     TransactionData,
     DateUtil,
     KeyboardUtil,
-    MyTeleBot,
-    Restrict_Access,
-    StateFilter,
-    IsDigitFilter,
-    ActionsCallbackFilter
+    MyTeleBot
 )
-from gspread import Client, Spreadsheet
-
-
-def configure_services() -> None:
-    """
-    Setup services into the container for dependency injection
-    """
-    trx_data = {
-        'Date': '',
-        'Outflow': '',
-        'Inflow': '',
-        'Category': '',
-        'Account': '',
-        'Memo': '',
-    }
-
-    scope = [
-        'https://spreadsheets.google.com/feeds',
-        'https://www.googleapis.com/auth/spreadsheets',
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/drive',
-    ]
-
-    di[Configuration] = Configuration().values
-    di[TransactionData] = TransactionData(trx_data)
-    di[AsyncTeleBot] = AsyncTeleBot(token=di[Configuration]['token'],
-                                    parse_mode='MARKDOWN',
-                                    exception_handler=app_logging.ExceptionHandler())
-    di[Restrict_Access] = Restrict_Access()
-    di[StateFilter] = StateFilter(di[AsyncTeleBot])
-    di[IsDigitFilter] = IsDigitFilter()
-    di[ActionsCallbackFilter] = ActionsCallbackFilter()
-    di[MyTeleBot] = MyTeleBot()
-    di[CallbackData] = CallbackData('action_id', prefix='Action')
-    di[KeyboardUtil] = KeyboardUtil()
-    di[Formatting] = Formatting()
-    di[Client] = gspread.service_account(
-        filename=di[Configuration]['credentials_json_path'], scopes=scope)
-    di[Spreadsheet] = di[Client].open_by_key(
-        di[Configuration]['worksheet_id'])
-    di['trx_accounts'] = [
-        item for sublist in aspire_util.get_accounts(di[Spreadsheet]) for item in sublist
-    ]
-
-
-configure_services()
+from gspread import Spreadsheet
+from startup import app
+from gevent.pywsgi import WSGIServer
 
 
 class App():
@@ -91,7 +39,6 @@ class App():
 
     async def upload(message):
         """Upload info to aspire google sheet"""
-        x = di[TransactionData]
         upload_data = [
             di[TransactionData]['Date'],
             di[TransactionData]['Outflow'],
@@ -202,10 +149,7 @@ class App():
         await di[MyTeleBot].Instance.set_state(message.from_user.id, Action.start)
         await di[MyTeleBot].Instance.send_message(message.chat.id, 'Select Option:', reply_markup=KeyboardUtil.create_default_options_keyboard())
 
-    def main() -> None:
-        """Run the bot."""
-        asyncio.run(di[MyTeleBot].Instance.polling())
-
 
 if __name__ == '__main__':
-    App.main()
+    http_server = WSGIServer(('', di[Configuration]['port']), app)
+    http_server.serve_forever()

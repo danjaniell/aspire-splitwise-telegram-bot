@@ -1,5 +1,3 @@
-from telegram import replykeyboardmarkup
-import app_logging
 from app_config import Configuration
 from datetime import datetime
 from telebot.async_telebot import AsyncTeleBot

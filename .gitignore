@@ -15,5 +15,7 @@ venv.bak/
 **/.idea/
 
 *.json
+*.cmd
 config.toml
 deploy.cmd
+test.env
