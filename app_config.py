@@ -15,6 +15,7 @@ class Configuration():
             'currency': '',
             'port': '',
             'token': '',
+            'secret': '',
             'update_mode': '',
             'app_name': '',
             'restrict_access': False,
@@ -30,6 +31,7 @@ class Configuration():
             config['currency'] = os.environ.get('CURRENCY', '₱')
             config['port'] = os.environ.get('PORT', '8443')
             config['token'] = os.environ.get('TOKEN', 'no_token')
+            config['secret'] = os.environ.get('SECRET', 'no_secret')
             config['update_mode'] = os.environ.get(
                 'UPDATE_MODE', 'polling')
             config['app_name'] = os.environ.get(
@@ -46,6 +48,7 @@ class Configuration():
             config['currency'] = file_config['currency']
             config['port'] = file_config['app']['port']
             config['token'] = file_config['telegram']['telegram_token']
+            config['secret'] = file_config['app']['secret']
             config['update_mode'] = file_config['app']['update_mode']
             config['app_name'] = file_config['app']['app_name']
             config['restrict_access'] = file_config['telegram']['restrict_access']

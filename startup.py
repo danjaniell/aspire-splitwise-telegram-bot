@@ -69,7 +69,7 @@ def configure_services() -> None:
 configure_services()
 
 WEBHOOK_URL_BASE = "https://%s.herokuapp.com" % (di[Configuration]['app_name'])
-WEBHOOK_URL_PATH = "/%s/" % (di[Configuration]['token'])
+WEBHOOK_URL_PATH = "/%s/" % (di[Configuration]['secret'])
 
 app = Flask(__name__)
 
