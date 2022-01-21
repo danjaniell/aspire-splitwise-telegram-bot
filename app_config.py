@@ -25,9 +25,10 @@ class Configuration():
             'webhook_base_url': '',
         }
 
-        ON_HEROKU = os.environ.get('ON_HEROKU')
-        ON_DOCKER = os.environ.get('ON_DOCKER')
-        ON_PYTHONANYWHERE = os.environ.get('ON_PYTHONANYWHERE')
+        ON_HEROKU = os.getenv("ON_HEROKU", 'False').lower() in ('true', '1')
+        ON_DOCKER = os.getenv("ON_DOCKER", 'False').lower() in ('true', '1')
+        ON_PYTHONANYWHERE = os.getenv(
+            "ON_PYTHONANYWHERE", 'False').lower() in ('true', '1')
 
         if ON_HEROKU or ON_DOCKER or ON_PYTHONANYWHERE:
             config['currency'] = os.environ.get('CURRENCY', '₱')
@@ -38,8 +39,8 @@ class Configuration():
                 'UPDATE_MODE', 'polling')
             config['app_name'] = os.environ.get(
                 'APP_NAME', 'app_name')
-            config['restrict_access'] = os.environ.get(
-                'RESTRICT_ACCESS', False)
+            config['restrict_access'] = os.getenv(
+                "RESTRICT_ACCESS", 'False').lower() in ('true', '1')
             config['list_of_users'] = [int(i) for i in list(
                 filter(None, os.environ.get('USER_IDS', '').replace(' ', '').split(',')))]
             config['credentials_json'] = json.loads(base64.b64decode(
