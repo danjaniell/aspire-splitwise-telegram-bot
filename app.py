@@ -26,7 +26,8 @@ from gevent.pywsgi import WSGIServer
 startup.configure_services()
 
 async_bot: AsyncTeleBot = di[MyAsyncTeleBot].Instance if di[Configuration]['run_async'] else None
-bot: TeleBot = di[MyTeleBot].Instance if not di[Configuration]['run_async'] else None
+sync_bot: TeleBot = di[MyTeleBot].Instance if not di[Configuration]['run_async'] else None
+bot_instance = async_bot if sync_bot is None else sync_bot
 
 
 class Async_Bot():
@@ -170,14 +171,14 @@ app = Flask(__name__)
 
 @app.route('/start', methods=['GET'])
 def start():
-    asyncio.run(async_bot.delete_webhook(
+    asyncio.run(bot_instance.delete_webhook(
         drop_pending_updates=True))
     time.sleep(0.1)
     if (di[Configuration]['update_mode'] == 'polling'):
-        asyncio.run(async_bot.infinity_polling(
+        asyncio.run(bot_instance.infinity_polling(
             skip_pending=True))
     elif (di[Configuration]['update_mode'] == 'webhook'):
-        asyncio.run(async_bot.set_webhook(
+        asyncio.run(bot_instance.set_webhook(
             url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH))
     return 'Bot started.'
 
@@ -187,7 +188,7 @@ def webhook():
     if flask.request.headers.get('content-type') == 'application/json':
         json_string = flask.request.get_data().decode('utf-8')
         update = types.Update.de_json(json_string)
-        asyncio.run(async_bot.process_new_updates([update]))
+        asyncio.run(bot_instance.process_new_updates([update]))
         return ''
     else:
         flask.abort(403)
