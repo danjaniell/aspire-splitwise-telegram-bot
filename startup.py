@@ -12,11 +12,17 @@ from services import (
     MyTeleBot,
     TransactionData,
     KeyboardUtil,
-    Restrict_Access,
+    RestrictAccessFilter,
+    ExceptionHandler,
+    RunOnAsyncFilter,
     StateFilter,
     IsDigitFilter,
     ActionsCallbackFilter,
-    ExceptionHandler
+    AsyncRestrictAccessFilter,
+    AsyncRunOnAsyncFilter,
+    AsyncStateFilter,
+    AsyncIsDigitFilter,
+    AsyncActionsCallbackFilter
 )
 from gspread import auth, Client, Spreadsheet
 
@@ -45,22 +51,24 @@ def configure_services() -> None:
     di[Configuration] = Configuration().values
 
     if di[Configuration]['run_async']:
-        async_bot = AsyncTeleBot(token=di[Configuration]['token'],
-                                 parse_mode='MARKDOWN',
-                                 exception_handler=ExceptionHandler())
-        di[MyAsyncTeleBot] = MyAsyncTeleBot(bot_instance=async_bot,
-                                            restrict_access_filter=Restrict_Access(),
-                                            state_filter=StateFilter(
-                                                async_bot),
-                                            is_digit_filter=IsDigitFilter(),
-                                            actions_callback_filter=ActionsCallbackFilter())
+        bot_instance = AsyncTeleBot(token=di[Configuration]['token'],
+                                    parse_mode='MARKDOWN',
+                                    exception_handler=ExceptionHandler())
+        di[MyAsyncTeleBot] = MyAsyncTeleBot(bot_instance=bot_instance,
+                                            restrict_access_filter=AsyncRestrictAccessFilter(),
+                                            run_on_async_filter=AsyncRunOnAsyncFilter(),
+                                            state_filter=AsyncStateFilter(
+                                                bot_instance),
+                                            is_digit_filter=AsyncIsDigitFilter(),
+                                            actions_callback_filter=AsyncActionsCallbackFilter())
     else:
         bot = TeleBot(token=di[Configuration]['token'],
                       parse_mode='MARKDOWN',
                       exception_handler=ExceptionHandler(),
                       threaded=False)
         di[MyTeleBot] = MyTeleBot(bot_instance=bot,
-                                  restrict_access_filter=Restrict_Access(),
+                                  restrict_access_filter=RestrictAccessFilter(),
+                                  run_on_async_filter=RunOnAsyncFilter(),
                                   state_filter=StateFilter(bot),
                                   is_digit_filter=IsDigitFilter(),
                                   actions_callback_filter=ActionsCallbackFilter())

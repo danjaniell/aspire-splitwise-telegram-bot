@@ -3,12 +3,15 @@ from app_config import Configuration
 from datetime import datetime
 from telebot import TeleBot
 from telebot.async_telebot import AsyncTeleBot
-from telebot.asyncio_filters import SimpleCustomFilter
-from telebot.asyncio_filters import StateFilter
-from telebot.asyncio_filters import IsDigitFilter
-from telebot import types
+from telebot.custom_filters import SimpleCustomFilter
+from telebot.custom_filters import StateFilter
+from telebot.custom_filters import IsDigitFilter
+from telebot.custom_filters import AdvancedCustomFilter
+from telebot.asyncio_filters import SimpleCustomFilter as AsyncSimpleCustomFilter
+from telebot.asyncio_filters import StateFilter as AsyncStateFilter
+from telebot.asyncio_filters import IsDigitFilter as AsyncIsDigitFilter
+from telebot.asyncio_filters import AdvancedCustomFilter as AsyncAdvancedCustomFilter
 from telebot.callback_data import CallbackData, CallbackDataFilter
-from telebot.asyncio_filters import AdvancedCustomFilter
 from telebot import types
 from kink import inject, di
 from enum import IntEnum
@@ -22,15 +25,35 @@ class ExceptionHandler(telebot.ExceptionHandler):
         di[Logger].error(exception)
 
 
-class Restrict_Access(SimpleCustomFilter):
+class AsyncRunOnAsyncFilter(AsyncSimpleCustomFilter):
+    key = 'run_on_async'
+
+    async def check(message: types.Message):
+        return di[Configuration]['run_async']
+
+
+class AsyncRestrictAccessFilter(AsyncSimpleCustomFilter):
     key = 'restrict'
 
-    @staticmethod
     async def check(message: types.Message):
         return (
             di[Configuration]['restrict_access']
             and message.from_user.id in di[Configuration]['list_of_users']
         )
+
+
+class AsyncActionsCallbackFilter(AsyncAdvancedCustomFilter):
+    key = 'config'
+
+    async def check(self, call: types.CallbackQuery, config: CallbackDataFilter):
+        return config.check(query=call)
+
+
+class RunOnAsyncFilter(SimpleCustomFilter):
+    key = 'run_on_async'
+
+    async def check(message: types.Message):
+        return di[Configuration]['run_async']
 
 
 class ActionsCallbackFilter(AdvancedCustomFilter):
@@ -40,36 +63,48 @@ class ActionsCallbackFilter(AdvancedCustomFilter):
         return config.check(query=call)
 
 
-@inject
+class RestrictAccessFilter(SimpleCustomFilter):
+    key = 'restrict'
+
+    def check(self, message: types.Message):
+        return (
+            di[Configuration]['restrict_access']
+            and message.from_user.id in di[Configuration]['list_of_users']
+        )
+
+
 class MyAsyncTeleBot(AsyncTeleBot):
     Instance: AsyncTeleBot = None
 
     def __init__(self,
-                 restrict_access_filter: Restrict_Access,
-                 state_filter: StateFilter,
-                 is_digit_filter: IsDigitFilter,
-                 actions_callback_filter: ActionsCallbackFilter,
+                 restrict_access_filter: AsyncRestrictAccessFilter,
+                 run_on_async_filter: AsyncRunOnAsyncFilter,
+                 state_filter: AsyncStateFilter,
+                 is_digit_filter: AsyncIsDigitFilter,
+                 actions_callback_filter: AsyncActionsCallbackFilter,
                  bot_instance: AsyncTeleBot):
 
         bot_instance.add_custom_filter(restrict_access_filter)
+        bot_instance.add_custom_filter(run_on_async_filter)
         bot_instance.add_custom_filter(state_filter)
         bot_instance.add_custom_filter(is_digit_filter)
         bot_instance.add_custom_filter(actions_callback_filter)
         self.Instance = bot_instance
 
 
-@inject
 class MyTeleBot(TeleBot):
     Instance: TeleBot = None
 
     def __init__(self,
-                 restrict_access_filter: Restrict_Access,
+                 restrict_access_filter: RestrictAccessFilter,
+                 run_on_async_filter: RunOnAsyncFilter,
                  state_filter: StateFilter,
                  is_digit_filter: IsDigitFilter,
                  actions_callback_filter: ActionsCallbackFilter,
                  bot_instance: TeleBot):
 
         bot_instance.add_custom_filter(restrict_access_filter)
+        bot_instance.add_custom_filter(run_on_async_filter)
         bot_instance.add_custom_filter(state_filter)
         bot_instance.add_custom_filter(is_digit_filter)
         bot_instance.add_custom_filter(actions_callback_filter)
