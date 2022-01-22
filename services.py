@@ -28,14 +28,14 @@ class ExceptionHandler(telebot.ExceptionHandler):
 class AsyncRunOnAsyncFilter(AsyncSimpleCustomFilter):
     key = 'run_only_if_async'
 
-    async def check(message: types.Message):
+    async def check(self, message: types.Message):
         return di[Configuration]['run_async']
 
 
 class AsyncRestrictAccessFilter(AsyncSimpleCustomFilter):
     key = 'restrict'
 
-    async def check(message: types.Message):
+    async def check(self, message: types.Message):
         return (
             di[Configuration]['restrict_access']
             and message.from_user.id in di[Configuration]['list_of_users']
