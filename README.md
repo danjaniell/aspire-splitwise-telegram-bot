@@ -43,6 +43,20 @@ Make sure to setup config vars in config.env file
 docker run --rm -it -p [port:port] --env-file [config.env] name
 ```
 
+Deploy in PythonAnywhere:
+
+Setup environment [Virtual Env Setup](https://help.pythonanywhere.com/pages/Virtualenvs)
+
+```
+workon [virtual_env_name]
+
+pip install --no-cache-dir --upgrade pip -r requirements.txt
+
+Make sure to setup config vars
+
+Modify wsgi app as needed /var/www/[username]_pythonanywhere_com_wsgi.py
+```
+
 Deploy in Heroku:
 
 ```
