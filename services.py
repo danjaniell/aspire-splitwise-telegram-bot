@@ -13,7 +13,7 @@ from telebot.asyncio_filters import IsDigitFilter as AsyncIsDigitFilter
 from telebot.asyncio_filters import AdvancedCustomFilter as AsyncAdvancedCustomFilter
 from telebot.callback_data import CallbackData, CallbackDataFilter
 from telebot import types
-from kink import inject, di
+from kink import di
 from enum import IntEnum
 from zoneinfo import ZoneInfo
 from typing import Any, Dict

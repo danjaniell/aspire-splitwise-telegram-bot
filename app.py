@@ -80,7 +80,7 @@ class Async_Bot():
             di[TransactionData]['Inflow'] = inflow
             di[TransactionData]['Memo'] = memo
 
-        await bot_instance.quick_save(message)
+        await Async_Bot.async_quick_save(message)
 
     @bot_instance.message_handler(regexp='^(A|a)dd(E|e)xp.+$', restrict=True, run_only_if_async=True)
     async def async_expense_trx(message):
@@ -102,7 +102,7 @@ class Async_Bot():
             di[TransactionData]['Outflow'] = outflow
             di[TransactionData]['Memo'] = memo
 
-        await bot_instance.quick_save(message)
+        await Async_Bot.async_quick_save(message)
 
     async def async_item_selected(action: Action, user_id, message_id):
         await bot_instance.set_state(user_id, action)
@@ -147,7 +147,7 @@ class Async_Bot():
     @bot_instance.callback_query_handler(func=lambda c: c.data == 'quick_save', run_only_if_async=True)
     async def async_savequick_callback(call: types.CallbackQuery):
         await bot_instance.delete_state(call.message.chat.id)
-        await bot_instance.upload(call.message)
+        await Async_Bot.async_upload(call.message)
 
     @bot_instance.message_handler(commands=['start', 's'], restrict=True, run_only_if_async=True)
     async def async_command_start(message):
