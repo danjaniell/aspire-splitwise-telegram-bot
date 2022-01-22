@@ -23,6 +23,7 @@ class Configuration():
             'credentials_json': {},
             'worksheet_id': '',
             'webhook_base_url': '',
+            'run_async': True,
         }
 
         ON_HEROKU = os.getenv("ON_HEROKU", 'False').lower() in ('true', '1')
@@ -66,6 +67,7 @@ class Configuration():
         elif ON_PYTHONANYWHERE:
             config['webhook_base_url'] = "https://%s.pythonanywhere.com" % (
                 config['app_name'])
+            config['run_async'] = False
 
         return config
 

@@ -3,13 +3,15 @@ import telebot
 import aspire_util
 from kink import di
 from app_config import Configuration
+from telebot import TeleBot
 from telebot.async_telebot import AsyncTeleBot
 from telebot.callback_data import CallbackData
 from services import (
     Formatting,
+    MyTeleBot,
     TransactionData,
     KeyboardUtil,
-    MyTeleBot,
+    MyAsyncTeleBot,
     Restrict_Access,
     StateFilter,
     IsDigitFilter,
@@ -38,17 +40,31 @@ def configure_services() -> None:
         'https://www.googleapis.com/auth/drive.file',
         'https://www.googleapis.com/auth/drive',
     ]
+
     di[Logger] = telebot.logger
     di[Configuration] = Configuration().values
+
+    if not di[Configuration]['run_async']:
+        async_bot = AsyncTeleBot(token=di[Configuration]['token'],
+                                 parse_mode='MARKDOWN',
+                                 exception_handler=ExceptionHandler())
+        di[MyTeleBot] = MyAsyncTeleBot(bot_instance=async_bot,
+                                       restrict_access_filter=Restrict_Access(),
+                                       state_filter=StateFilter(async_bot),
+                                       is_digit_filter=IsDigitFilter(),
+                                       actions_callback_filter=ActionsCallbackFilter())
+    else:
+        bot = TeleBot(token=di[Configuration]['token'],
+                      parse_mode='MARKDOWN',
+                      exception_handler=ExceptionHandler(),
+                      threaded=False)
+        di[MyTeleBot] = MyTeleBot(bot_instance=bot,
+                                  restrict_access_filter=Restrict_Access(),
+                                  state_filter=StateFilter(bot),
+                                  is_digit_filter=IsDigitFilter(),
+                                  actions_callback_filter=ActionsCallbackFilter())
+
     di[TransactionData] = TransactionData(trx_data)
-    di[AsyncTeleBot] = AsyncTeleBot(token=di[Configuration]['token'],
-                                    parse_mode='MARKDOWN',
-                                    exception_handler=ExceptionHandler())
-    di[Restrict_Access] = Restrict_Access()
-    di[StateFilter] = StateFilter(di[AsyncTeleBot])
-    di[IsDigitFilter] = IsDigitFilter()
-    di[ActionsCallbackFilter] = ActionsCallbackFilter()
-    di[MyTeleBot] = MyTeleBot()
     di[CallbackData] = CallbackData('action_id', prefix='Action')
     di[KeyboardUtil] = KeyboardUtil()
     di[Formatting] = Formatting()

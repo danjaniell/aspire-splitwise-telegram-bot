@@ -1,6 +1,7 @@
 import telebot
 from app_config import Configuration
 from datetime import datetime
+from telebot import TeleBot
 from telebot.async_telebot import AsyncTeleBot
 from telebot.asyncio_filters import SimpleCustomFilter
 from telebot.asyncio_filters import StateFilter
@@ -40,7 +41,7 @@ class ActionsCallbackFilter(AdvancedCustomFilter):
 
 
 @inject
-class MyTeleBot(AsyncTeleBot):
+class MyAsyncTeleBot(AsyncTeleBot):
     Instance = None
 
     def __init__(self,
@@ -49,6 +50,29 @@ class MyTeleBot(AsyncTeleBot):
                  is_digit_filter: IsDigitFilter,
                  actions_callback_filter: ActionsCallbackFilter,
                  bot_instance: AsyncTeleBot):
+        self._config = di[Configuration]
+        self._restrict_access_filter = restrict_access_filter
+        self._state_filter = state_filter
+        self._is_digit_filter = is_digit_filter
+        self._actions_callback_filter = actions_callback_filter
+
+        bot_instance.add_custom_filter(self._restrict_access_filter)
+        bot_instance.add_custom_filter(self._state_filter)
+        bot_instance.add_custom_filter(self._is_digit_filter)
+        bot_instance.add_custom_filter(self._actions_callback_filter)
+        self.Instance = bot_instance
+
+
+@inject
+class MyTeleBot(TeleBot):
+    Instance: TeleBot = None
+
+    def __init__(self,
+                 restrict_access_filter: Restrict_Access,
+                 state_filter: StateFilter,
+                 is_digit_filter: IsDigitFilter,
+                 actions_callback_filter: ActionsCallbackFilter,
+                 bot_instance: TeleBot):
         self._config = di[Configuration]
         self._restrict_access_filter = restrict_access_filter
         self._state_filter = state_filter
