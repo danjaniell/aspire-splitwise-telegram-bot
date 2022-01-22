@@ -27,7 +27,7 @@ bot_instance = di['bot_instance']
 
 
 class Async_Bot():
-    @bot_instance.message_handler(state='*', commands=['cancel', 'q'], run_on_async=True)
+    @bot_instance.message_handler(state='*', commands=['cancel', 'q'], run_only_if_async=True)
     async def async_command_cancel(message):
         """
         Cancel transaction from any state
@@ -35,7 +35,7 @@ class Async_Bot():
         await bot_instance.delete_state(message.chat.id)
         await bot_instance.send_message(message.chat.id, 'Transaction cancelled.')
 
-    @bot_instance.message_handler(state=[Action.outflow, Action.inflow], is_digit=False, run_on_async=True)
+    @bot_instance.message_handler(state=[Action.outflow, Action.inflow], is_digit=False, run_only_if_async=True)
     async def async_invalid_amt(message):
         await bot_instance.reply_to(message, 'Please enter a number')
 
@@ -60,7 +60,7 @@ class Async_Bot():
         di[TransactionData].reset()
         await bot_instance.reply_to(message, '✅ Transaction Saved\n')
 
-    @bot_instance.message_handler(regexp='^(A|a)dd(I|i)nc.+$', restrict=True, run_on_async=True)
+    @bot_instance.message_handler(regexp='^(A|a)dd(I|i)nc.+$', restrict=True, run_only_if_async=True)
     async def async_income_trx(message):
         """Add income transaction using Today's date, Inflow Amount and Memo"""
         di[TransactionData].reset()
@@ -82,7 +82,7 @@ class Async_Bot():
 
         await bot_instance.quick_save(message)
 
-    @bot_instance.message_handler(regexp='^(A|a)dd(E|e)xp.+$', restrict=True, run_on_async=True)
+    @bot_instance.message_handler(regexp='^(A|a)dd(E|e)xp.+$', restrict=True, run_only_if_async=True)
     async def async_expense_trx(message):
         """Add expense transaction using Today's date, Outflow Amount and Memo"""
         di[TransactionData].reset()
@@ -119,7 +119,7 @@ class Async_Bot():
         await bot_instance.edit_message_text(chat_id=user_id, message_id=message_id,
                                              text=text, reply_markup=KeyboardUtil.create_save_keyboard('save'))
 
-    @bot_instance.callback_query_handler(func=None, config=di[CallbackData].filter(), state=Action.start, restrict=True, run_on_async=True)
+    @bot_instance.callback_query_handler(func=None, config=di[CallbackData].filter(), state=Action.start, restrict=True, run_only_if_async=True)
     async def async_actions_callback(call: types.CallbackQuery):
         callback_data: dict = di[CallbackData].parse(
             callback_data=call.data)
@@ -134,22 +134,22 @@ class Async_Bot():
         else:
             await bot_instance.item_selected(action, user_id, message_id)
 
-    @bot_instance.message_handler(state=Action.outflow, restrict=True, run_on_async=True)
+    @bot_instance.message_handler(state=Action.outflow, restrict=True, run_only_if_async=True)
     async def async_get_outflow(message):
         di[TransactionData]['Outflow'] = message.text
 
-    @bot_instance.callback_query_handler(func=lambda c: c.data == 'save', run_on_async=True)
+    @bot_instance.callback_query_handler(func=lambda c: c.data == 'save', run_only_if_async=True)
     async def async_save_callback(call: types.CallbackQuery):
         await bot_instance.set_state(call.from_user.id, Action.start)
         await bot_instance.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                              text='Update:', reply_markup=KeyboardUtil.create_options_keyboard())
 
-    @bot_instance.callback_query_handler(func=lambda c: c.data == 'quick_save', run_on_async=True)
+    @bot_instance.callback_query_handler(func=lambda c: c.data == 'quick_save', run_only_if_async=True)
     async def async_savequick_callback(call: types.CallbackQuery):
         await bot_instance.delete_state(call.message.chat.id)
         await bot_instance.upload(call.message)
 
-    @bot_instance.message_handler(commands=['start', 's'], restrict=True, run_on_async=True)
+    @bot_instance.message_handler(commands=['start', 's'], restrict=True, run_only_if_async=True)
     async def async_command_start(message):
         """
         Start the conversation and ask user for input.
@@ -160,7 +160,7 @@ class Async_Bot():
 
 
 class Sync_Bot():
-    @bot_instance.message_handler(commands=['start', 's'], restrict=True, run_on_async=False)
+    @bot_instance.message_handler(commands=['start', 's'], restrict=True, run_only_if_async=False)
     def command_start(message):
         """
         Start the conversation and ask user for input.
