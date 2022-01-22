@@ -20,6 +20,9 @@ from services import (
 from gspread import Spreadsheet
 from gevent.pywsgi import WSGIServer
 
+# inject dependencies
+startup.configure_services()
+
 
 class App():
     @di[MyAsyncTeleBot].Instance.message_handler(state='*', commands=['cancel', 'q'])

@@ -1,4 +1,3 @@
-from logging import Logger
 import telebot
 import aspire_util
 from kink import di
@@ -6,12 +5,13 @@ from app_config import Configuration
 from telebot import TeleBot
 from telebot.async_telebot import AsyncTeleBot
 from telebot.callback_data import CallbackData
+from logging import Logger
 from services import (
     Formatting,
+    MyAsyncTeleBot,
     MyTeleBot,
     TransactionData,
     KeyboardUtil,
-    MyAsyncTeleBot,
     Restrict_Access,
     StateFilter,
     IsDigitFilter,
@@ -44,15 +44,16 @@ def configure_services() -> None:
     di[Logger] = telebot.logger
     di[Configuration] = Configuration().values
 
-    if not di[Configuration]['run_async']:
+    if di[Configuration]['run_async']:
         async_bot = AsyncTeleBot(token=di[Configuration]['token'],
                                  parse_mode='MARKDOWN',
                                  exception_handler=ExceptionHandler())
-        di[MyTeleBot] = MyAsyncTeleBot(bot_instance=async_bot,
-                                       restrict_access_filter=Restrict_Access(),
-                                       state_filter=StateFilter(async_bot),
-                                       is_digit_filter=IsDigitFilter(),
-                                       actions_callback_filter=ActionsCallbackFilter())
+        di[MyAsyncTeleBot] = MyAsyncTeleBot(bot_instance=async_bot,
+                                            restrict_access_filter=Restrict_Access(),
+                                            state_filter=StateFilter(
+                                                async_bot),
+                                            is_digit_filter=IsDigitFilter(),
+                                            actions_callback_filter=ActionsCallbackFilter())
     else:
         bot = TeleBot(token=di[Configuration]['token'],
                       parse_mode='MARKDOWN',
@@ -76,6 +77,3 @@ def configure_services() -> None:
         item for sublist in aspire_util.get_accounts(di[Spreadsheet]) for item in sublist
     ]
     di['WEBHOOK_URL_BASE'] = di[Configuration]['webhook_base_url']
-
-
-configure_services()
