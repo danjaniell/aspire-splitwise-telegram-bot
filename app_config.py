@@ -47,6 +47,8 @@ class Configuration():
             config['credentials_json'] = json.loads(base64.b64decode(
                 os.environ.get('CREDENTIALS', '')))
             config['worksheet_id'] = os.environ.get('WORKSHEET_ID', '')
+            config['run_async'] = os.getenv(
+                "RUN_ASYNC", 'False').lower() in ('true', '1')
         else:
             file_config = toml.load('config.toml')
             config['currency'] = file_config['currency']
@@ -60,6 +62,7 @@ class Configuration():
             config['credentials_json'] = json.loads(base64.b64decode(
                 file_config['gsheet']['credentials_json']))
             config['worksheet_id'] = file_config['gsheet']['gsheet_worksheet_id']
+            config['run_async'] = file_config['app']['run_async']
 
         if ON_HEROKU:
             config['webhook_base_url'] = "https://%s.herokuapp.com" % (
