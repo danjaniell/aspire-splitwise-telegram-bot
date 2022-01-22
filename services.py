@@ -52,14 +52,14 @@ class AsyncActionsCallbackFilter(AsyncAdvancedCustomFilter):
 class RunOnAsyncFilter(SimpleCustomFilter):
     key = 'run_on_async'
 
-    async def check(message: types.Message):
+    def check(self, message: types.Message):
         return di[Configuration]['run_async']
 
 
 class ActionsCallbackFilter(AdvancedCustomFilter):
     key = 'config'
 
-    async def check(self, call: types.CallbackQuery, config: CallbackDataFilter):
+    def check(self, call: types.CallbackQuery, config: CallbackDataFilter):
         return config.check(query=call)
 
 
@@ -73,42 +73,23 @@ class RestrictAccessFilter(SimpleCustomFilter):
         )
 
 
-class MyAsyncTeleBot(AsyncTeleBot):
-    Instance: AsyncTeleBot = None
-
+class BotFactory():
     def __init__(self,
-                 restrict_access_filter: AsyncRestrictAccessFilter,
-                 run_on_async_filter: AsyncRunOnAsyncFilter,
-                 state_filter: AsyncStateFilter,
-                 is_digit_filter: AsyncIsDigitFilter,
-                 actions_callback_filter: AsyncActionsCallbackFilter,
-                 bot_instance: AsyncTeleBot):
-
+                 restrict_access_filter,
+                 run_on_async_filter,
+                 state_filter,
+                 is_digit_filter,
+                 actions_callback_filter,
+                 bot_instance):
         bot_instance.add_custom_filter(restrict_access_filter)
         bot_instance.add_custom_filter(run_on_async_filter)
         bot_instance.add_custom_filter(state_filter)
         bot_instance.add_custom_filter(is_digit_filter)
         bot_instance.add_custom_filter(actions_callback_filter)
-        self.Instance = bot_instance
+        self._instance = bot_instance
 
-
-class MyTeleBot(TeleBot):
-    Instance: TeleBot = None
-
-    def __init__(self,
-                 restrict_access_filter: RestrictAccessFilter,
-                 run_on_async_filter: RunOnAsyncFilter,
-                 state_filter: StateFilter,
-                 is_digit_filter: IsDigitFilter,
-                 actions_callback_filter: ActionsCallbackFilter,
-                 bot_instance: TeleBot):
-
-        bot_instance.add_custom_filter(restrict_access_filter)
-        bot_instance.add_custom_filter(run_on_async_filter)
-        bot_instance.add_custom_filter(state_filter)
-        bot_instance.add_custom_filter(is_digit_filter)
-        bot_instance.add_custom_filter(actions_callback_filter)
-        self.Instance = bot_instance
+    def create_bot(self):
+        return self._instance
 
 
 class Action(IntEnum):

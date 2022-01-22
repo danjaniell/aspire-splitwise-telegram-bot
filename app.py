@@ -13,11 +13,9 @@ from telebot import TeleBot, types
 from services import (
     Action,
     Formatting,
-    MyTeleBot,
     TransactionData,
     DateUtil,
-    KeyboardUtil,
-    MyAsyncTeleBot
+    KeyboardUtil
 )
 from gspread import Spreadsheet
 from gevent.pywsgi import WSGIServer
@@ -25,9 +23,7 @@ from gevent.pywsgi import WSGIServer
 # inject dependencies
 startup.configure_services()
 
-async_bot: AsyncTeleBot = di[MyAsyncTeleBot].Instance if di[Configuration]['run_async'] else None
-sync_bot: TeleBot = di[MyTeleBot].Instance if not di[Configuration]['run_async'] else None
-bot_instance = async_bot if sync_bot is None else sync_bot
+bot_instance = di['bot_instance']
 
 
 class Async_Bot():
@@ -153,7 +149,7 @@ class Async_Bot():
         await bot_instance.delete_state(call.message.chat.id)
         await bot_instance.upload(call.message)
 
-    @bot_instance.message_handler(commands=['start', 's'], restrict=True, func=lambda message: message.document.mime_type == 'text/plain', run_on_async=True)
+    @bot_instance.message_handler(commands=['start', 's'], restrict=True, run_on_async=True)
     async def async_command_start(message):
         """
         Start the conversation and ask user for input.
@@ -165,13 +161,14 @@ class Async_Bot():
 
 class Sync_Bot():
     @bot_instance.message_handler(commands=['start', 's'], restrict=True, run_on_async=False)
-    async def command_start(message):
+    def command_start(message):
         """
         Start the conversation and ask user for input.
         Initialize with options to fill in.
         """
-        await bot_instance.set_state(message.from_user.id, Action.start)
-        await bot_instance.send_message(message.chat.id, 'Select Option:', reply_markup=KeyboardUtil.create_default_options_keyboard())
+        bot_instance.set_state(message.from_user.id, Action.start)
+        bot_instance.send_message(message.chat.id, 'Select Option:',
+                                  reply_markup=KeyboardUtil.create_default_options_keyboard())
 
 
 WEBHOOK_URL_BASE = di['WEBHOOK_URL_BASE']

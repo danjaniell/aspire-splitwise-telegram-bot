@@ -8,8 +8,7 @@ from telebot.callback_data import CallbackData
 from logging import Logger
 from services import (
     Formatting,
-    MyAsyncTeleBot,
-    MyTeleBot,
+    BotFactory,
     TransactionData,
     KeyboardUtil,
     RestrictAccessFilter,
@@ -54,24 +53,24 @@ def configure_services() -> None:
         bot_instance = AsyncTeleBot(token=di[Configuration]['token'],
                                     parse_mode='MARKDOWN',
                                     exception_handler=ExceptionHandler())
-        di[MyAsyncTeleBot] = MyAsyncTeleBot(bot_instance=bot_instance,
-                                            restrict_access_filter=AsyncRestrictAccessFilter(),
-                                            run_on_async_filter=AsyncRunOnAsyncFilter(),
-                                            state_filter=AsyncStateFilter(
-                                                bot_instance),
-                                            is_digit_filter=AsyncIsDigitFilter(),
-                                            actions_callback_filter=AsyncActionsCallbackFilter())
+        di['bot_instance'] = BotFactory(bot_instance=bot_instance,
+                                        restrict_access_filter=AsyncRestrictAccessFilter(),
+                                        run_on_async_filter=AsyncRunOnAsyncFilter(),
+                                        state_filter=AsyncStateFilter(
+                                            bot_instance),
+                                        is_digit_filter=AsyncIsDigitFilter(),
+                                        actions_callback_filter=AsyncActionsCallbackFilter()).create_bot()
     else:
-        bot = TeleBot(token=di[Configuration]['token'],
-                      parse_mode='MARKDOWN',
-                      exception_handler=ExceptionHandler(),
-                      threaded=False)
-        di[MyTeleBot] = MyTeleBot(bot_instance=bot,
-                                  restrict_access_filter=RestrictAccessFilter(),
-                                  run_on_async_filter=RunOnAsyncFilter(),
-                                  state_filter=StateFilter(bot),
-                                  is_digit_filter=IsDigitFilter(),
-                                  actions_callback_filter=ActionsCallbackFilter())
+        bot_instance = TeleBot(token=di[Configuration]['token'],
+                               parse_mode='MARKDOWN',
+                               exception_handler=ExceptionHandler(),
+                               threaded=False)
+        di['bot_instance'] = BotFactory(bot_instance=bot_instance,
+                                        restrict_access_filter=RestrictAccessFilter(),
+                                        run_on_async_filter=RunOnAsyncFilter(),
+                                        state_filter=StateFilter(bot_instance),
+                                        is_digit_filter=IsDigitFilter(),
+                                        actions_callback_filter=ActionsCallbackFilter()).create_bot()
 
     di[TransactionData] = TransactionData(trx_data)
     di[CallbackData] = CallbackData('action_id', prefix='Action')
