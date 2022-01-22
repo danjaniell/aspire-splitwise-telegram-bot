@@ -70,7 +70,6 @@ class Configuration():
         elif ON_PYTHONANYWHERE:
             config['webhook_base_url'] = "https://%s.pythonanywhere.com" % (
                 config['app_name'])
-            config['run_async'] = False
 
         return config
 
