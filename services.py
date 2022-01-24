@@ -77,14 +77,14 @@ class BotFactory():
 
 
 class Action(IntEnum):
-    outflow = 1
-    inflow = 2
-    category = 3
-    account = 4
-    memo = 5
-    date = 6
-    cancel = 7
-    done = 8
+    date = 1
+    outflow = 2
+    inflow = 3
+    category = 4
+    account = 5
+    memo = 6
+    cancel = 10
+    done = 11
     start = 100
     quick_end = 200
     category_list = 300

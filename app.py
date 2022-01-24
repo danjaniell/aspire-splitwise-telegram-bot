@@ -244,7 +244,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         await bot_instance.set_state(call.message.chat.id, Action.start)
         await bot_instance.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                             text='Update:', reply_markup=KeyboardUtil.create_options_keyboard())
+                                             text='Current Transaction:', reply_markup=KeyboardUtil.create_options_keyboard())
 
     @ bot_instance.callback_query_handler(func=lambda c: c.data == 'quick_save', state=Action.quick_end)
     async def async_savequick_callback(call: types.CallbackQuery):
@@ -261,6 +261,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         Initialize with options to fill in.
         """
         await bot_instance.set_state(message.chat.id, Action.start)
+        di[TransactionData]['Date'] = DateUtil.date_today()
         await bot_instance.send_message(message.chat.id, 'Select Option:', reply_markup=KeyboardUtil.create_default_options_keyboard())
 
 
