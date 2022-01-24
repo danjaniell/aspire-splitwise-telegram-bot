@@ -191,16 +191,11 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         di[TransactionData]['Inflow'] = message.text
 
-# TODO actual processing of category.
-# Select a category
-# Save selected option in TransactionData
-# return to start menu --> call async_save_callback?
     @ bot_instance.callback_query_handler(func=lambda c: c.data in categories, state=Action.category_list, restrict=True)
     async def async_get_category(call: types.CallbackQuery):
         """
         Get user selection and store to Category
         """
-        await bot_instance.set_state(call.message.chat.id, Action.category)
         action, choice = aspire_util.separate_callback_data(call.data)
         di[TransactionData]['Category'] = choice
         await async_save_callback(call)
