@@ -86,6 +86,7 @@ class Action(IntEnum):
     done = 7
     start = 100
     quick_end = 200
+    category_list = 300
 
 
 class Formatting():

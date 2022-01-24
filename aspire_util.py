@@ -153,7 +153,6 @@ def process_calendar_selection(update, context):
         context.bot.answer_callback_query(
             callback_query_id=query.id, text="Something went wrong!"
         )
-        # UNKNOWN
     return ret_data
 
 
