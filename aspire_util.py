@@ -115,44 +115,37 @@ def create_calendar(year=None, month=None):
     return types.InlineKeyboardMarkup(keyboard)
 
 
-def process_calendar_selection(update, context):
+async def async_process_calendar_selection(call, bot_instance):
     """
     Process the callback_query. This method generates a new calendar if forward or
     backward is pressed. This method should be called inside a CallbackQueryHandler.
     """
     ret_data = (False, None)
-    query = update.callback_query
-    (_, action, year, month, day) = separate_callback_data(query.data)
+    (_, action, year, month, day) = separate_callback_data(call.data)
     curr = datetime.datetime(int(year), int(month), 1)
     if action == "IGNORE":
-        context.bot.answer_callback_query(callback_query_id=query.id)
+        await bot_instance.answer_callback_query(callback_query_id=call.id)
     elif action == "DAY":
-        context.bot.edit_message_text(
-            text=query.message.text,
-            chat_id=query.message.chat_id,
-            message_id=query.message.message_id,
-        )
         ret_data = True, datetime.datetime(int(year), int(month), int(day))
     elif action == "PREV-MONTH":
         pre = curr - datetime.timedelta(days=1)
-        context.bot.edit_message_text(
-            text=query.message.text,
-            chat_id=query.message.chat_id,
-            message_id=query.message.message_id,
+        await bot_instance.edit_message_text(
+            text=call.message.text,
+            chat_id=call.message.chat.id,
+            message_id=call.message.id,
             reply_markup=create_calendar(int(pre.year), int(pre.month)),
         )
     elif action == "NEXT-MONTH":
         ne = curr + datetime.timedelta(days=31)
-        context.bot.edit_message_text(
-            text=query.message.text,
-            chat_id=query.message.chat_id,
-            message_id=query.message.message_id,
+        await bot_instance.edit_message_text(
+            text=call.message.text,
+            chat_id=call.message.chat.id,
+            message_id=call.message.id,
             reply_markup=create_calendar(int(ne.year), int(ne.month)),
         )
     else:
-        context.bot.answer_callback_query(
-            callback_query_id=query.id, text="Something went wrong!"
-        )
+        await bot_instance.answer_callback_query(
+            callback_query_id=call.id, text="Something went wrong!")
     return ret_data
 
 

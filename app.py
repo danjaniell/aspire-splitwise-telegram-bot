@@ -156,6 +156,10 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         await bot_instance.edit_message_text(chat_id=message.chat.id, message_id=message.id,
                                              text='Select Account:', reply_markup=aspire_util.create_account_inline(trx_accounts, 'acc_sel'))
 
+    async def date_sel_start(message: types.Message):
+        await bot_instance.edit_message_text(chat_id=message.chat.id, message_id=message.id,
+                                             text='Select Date:', reply_markup=aspire_util.create_calendar())
+
     async def async_item_selected(action: Action, message: types.Message):
         """
         Process item selected through /start command
@@ -173,6 +177,8 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             await category_select_start(message)
         elif action == Action.account:
             await account_sel_start(message)
+        elif action == Action.date:
+            await date_sel_start(message)
         else:
             text = f'\[Current Value: ' + f' *{displayData}*]' + '\n' + \
                 f'Enter {action.name.capitalize()} : '
@@ -214,6 +220,16 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         action, choice = aspire_util.separate_callback_data(call.data)
         di[TransactionData]['Account'] = choice
         await async_save_callback(call)
+
+    @ bot_instance.callback_query_handler(func=None, state=Action.date)
+    async def async_get_date(call: types.CallbackQuery):
+        """
+        Read user selection from calendar and store to Date
+        """
+        selected, date = await aspire_util.async_process_calendar_selection(call, bot_instance)
+        if selected:
+            di[TransactionData]['Date'] = date.strftime("%m/%d/%Y")
+            await async_save_callback(call)
 
     @ bot_instance.callback_query_handler(func=lambda c: c.data in groups, state=Action.category)
     async def async_list_categories(call: types.CallbackQuery):
