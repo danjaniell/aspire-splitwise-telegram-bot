@@ -60,6 +60,16 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         await bot_instance.delete_state(message.chat.id)
         await bot_instance.edit_message_text(chat_id=message.chat.id, message_id=message.id, text='Transaction cancelled.')
 
+    @ bot_instance.message_handler(state=[Action.outflow, Action.inflow, Action.memo], restrict=True)
+    async def async_save_current(message: types.Message):
+        """
+        Saves user input to selected option
+        """
+        current_action = await bot_instance.get_state(message.chat.id)
+        di[TransactionData][current_action.name.capitalize()] = message.text
+        x = di['current_trx_message']
+        await async_item_selected(current_action, di['current_trx_message'])
+
     async def async_quick_save(message: types.Message):
         await bot_instance.set_state(message.chat.id, Action.quick_end)
         await bot_instance.send_message(message.chat.id,
@@ -166,6 +176,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         else:
             text = f'\[Current Value: ' + f' *{displayData}*]' + '\n' + \
                 f'Enter {action.name.capitalize()} : '
+            # Save message id for reference
             await bot_instance.edit_message_text(chat_id=message.chat.id, message_id=message.id,
                                                  text=text, reply_markup=KeyboardUtil.create_save_keyboard('save'))
 
@@ -186,20 +197,6 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         else:
             await async_item_selected(action, call.message)
 
-    @ bot_instance.message_handler(state=Action.outflow, restrict=True)
-    async def async_get_outflow(message: types.Message):
-        """
-        Read user input and store to Outflow
-        """
-        di[TransactionData]['Outflow'] = message.text
-
-    @ bot_instance.message_handler(state=Action.inflow, restrict=True)
-    async def async_get_inflow(message: types.Message):
-        """
-        Read user input and store to Inflow
-        """
-        di[TransactionData]['Inflow'] = message.text
-
     @ bot_instance.callback_query_handler(func=lambda c: c.data in categories, state=Action.category_list, restrict=True)
     async def async_get_category(call: types.CallbackQuery):
         """
@@ -217,13 +214,6 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         action, choice = aspire_util.separate_callback_data(call.data)
         di[TransactionData]['Account'] = choice
         await async_save_callback(call)
-
-    @ bot_instance.message_handler(state=Action.memo, restrict=True)
-    async def async_get_memo(message: types.Message):
-        """
-        Read user input and store to Memo
-        """
-        di[TransactionData]['Memo'] = message.text
 
     @ bot_instance.callback_query_handler(func=lambda c: c.data in groups, state=Action.category)
     async def async_list_categories(call: types.CallbackQuery):
@@ -262,7 +252,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         await bot_instance.set_state(message.chat.id, Action.start)
         di[TransactionData]['Date'] = DateUtil.date_today()
-        await bot_instance.send_message(message.chat.id, 'Select Option:', reply_markup=KeyboardUtil.create_default_options_keyboard())
+        di['current_trx_message'] = await bot_instance.send_message(message.chat.id, 'Select Option:', reply_markup=KeyboardUtil.create_default_options_keyboard())
 
 
 def sync_bot_functions(bot_instance: TeleBot):
