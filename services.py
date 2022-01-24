@@ -82,8 +82,9 @@ class Action(IntEnum):
     category = 3
     account = 4
     memo = 5
-    cancel = 6
-    done = 7
+    date = 6
+    cancel = 7
+    done = 8
     start = 100
     quick_end = 200
     category_list = 300

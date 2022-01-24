@@ -78,12 +78,14 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         di[TransactionData].reset()
         await bot_instance.reply_to(message, '✅ Transaction Saved\n')
 
-    @bot_instance.message_handler(regexp='^(A|a)dd(I|i)nc.+$', restrict=True)
+    @bot_instance.message_handler(state='*', regexp='^(A|a)dd(I|i)nc.+$', restrict=True)
     async def async_income_trx(message: types.Message):
         """
         Add income transaction using Today's date, Inflow Amount and Memo
         """
         di[TransactionData].reset()
+        bot_instance.delete_state(message.chat.id)
+
         text = message.text
         result = list(shlex.split(text))
         del result[0]
@@ -99,12 +101,14 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             di[TransactionData]['Memo'] = memo
         await async_quick_save(message)
 
-    @bot_instance.message_handler(regexp='^(A|a)dd(E|e)xp.+$', restrict=True)
+    @bot_instance.message_handler(state='*', regexp='^(A|a)dd(E|e)xp.+$', restrict=True)
     async def async_expense_trx(message: types.Message):
         """
         Add expense transaction using Today's date, Outflow Amount and Memo
         """
         di[TransactionData].reset()
+        bot_instance.delete_state(message.chat.id)
+
         text = message.text
         result = list(shlex.split(text))
         del result[0]
@@ -206,7 +210,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         di[TransactionData]['Memo'] = message.text
 
-    @ bot_instance.callback_query_handler(func=lambda c: c.data in groups)
+    @ bot_instance.callback_query_handler(func=lambda c: c.data in groups, state=Action.category)
     async def async_list_category(call: types.CallbackQuery):
         """
         Show categories as InlineKeyboard
@@ -218,7 +222,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
                                              text='Select Category:',
                                              reply_markup=aspire_util.create_category_inline(trx_categories[choice], 'cat_selection'))
 
-    @ bot_instance.callback_query_handler(func=lambda c: c.data == 'save')
+    @ bot_instance.callback_query_handler(func=lambda c: c.data == 'save', state=[Action.outflow, Action.inflow, Action.category, Action.account, Action.memo, Action.date])
     async def async_save_callback(call: types.CallbackQuery):
         """
         Return to main menu of /start command showing new saved values
@@ -227,7 +231,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         await bot_instance.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                              text='Update:', reply_markup=KeyboardUtil.create_options_keyboard())
 
-    @ bot_instance.callback_query_handler(func=lambda c: c.data == 'quick_save')
+    @ bot_instance.callback_query_handler(func=lambda c: c.data == 'quick_save', state=Action.quick_end)
     async def async_savequick_callback(call: types.CallbackQuery):
         """
         Clears state and upload to sheets for quick add functions
@@ -235,7 +239,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         await bot_instance.delete_state(call.message.chat.id)
         await async_upload(call.message)
 
-    @ bot_instance.message_handler(commands=['start', 's'], restrict=True)
+    @ bot_instance.message_handler(state='*', commands=['start', 's'], restrict=True)
     async def async_command_start(message: types.Message):
         """
         Start the conversation and ask user for input.
