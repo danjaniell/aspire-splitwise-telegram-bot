@@ -34,13 +34,15 @@ accounts = ["acc_sel;" + s for s in trx_accounts]
 
 def async_bot_functions(bot_instance: AsyncTeleBot):
     # Set all async bot handlers inside this function
+
     @bot_instance.message_handler(state='*', commands=['cancel', 'q'])
-    async def async_command_cancel(message: types.Message):
+    async def async_cancel_trx(message: types.Message):
         """
-        Cancel transaction from any state
+        Clears state and cancel current transaction
         """
+        message = di['current_trx_message']
         await bot_instance.delete_state(message.chat.id)
-        await bot_instance.send_message(message.chat.id, 'Transaction cancelled.')
+        await bot_instance.edit_message_text(chat_id=message.chat.id, message_id=message.id, text='Transaction cancelled.')
 
     @bot_instance.message_handler(state=[Action.outflow, Action.inflow], is_digit=False)
     async def async_invalid_amt(message: types.Message):
@@ -52,13 +54,6 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         await bot_instance.delete_state(message.chat.id)
         await async_upload(message)
-
-    async def async_cancel_trx(message: types.Message):
-        """
-        Clears state and cancel current transaction
-        """
-        await bot_instance.delete_state(message.chat.id)
-        await bot_instance.edit_message_text(chat_id=message.chat.id, message_id=message.id, text='Transaction cancelled.')
 
     @ bot_instance.message_handler(state=[Action.outflow, Action.inflow, Action.memo], restrict=True)
     async def async_save_current(message: types.Message):
@@ -93,13 +88,14 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         di[TransactionData].reset()
         await bot_instance.reply_to(message, '✅ Transaction Saved\n')
 
-    @bot_instance.message_handler(state='*', regexp='^(A|a)dd(I|i)nc.+$', restrict=True)
+    @bot_instance.message_handler(regexp='^(A|a)dd(I|i)nc.+$', restrict=True)
     async def async_income_trx(message: types.Message):
         """
         Add income transaction using Today's date, Inflow Amount and Memo
         """
         di[TransactionData].reset()
-        bot_instance.delete_state(message.chat.id)
+        if await bot_instance.get_state(message.chat.id):
+            await bot_instance.delete_state(message.chat.id)
 
         text = message.text
         result = list(shlex.split(text))
@@ -116,13 +112,14 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             di[TransactionData]['Memo'] = memo
         await async_quick_save(message)
 
-    @bot_instance.message_handler(state='*', regexp='^(A|a)dd(E|e)xp.+$', restrict=True)
+    @bot_instance.message_handler(regexp='^(A|a)dd(E|e)xp.+$', restrict=True)
     async def async_expense_trx(message: types.Message):
         """
         Add expense transaction using Today's date, Outflow Amount and Memo
         """
         di[TransactionData].reset()
-        bot_instance.delete_state(message.chat.id)
+        if await bot_instance.get_state(message.chat.id):
+            await bot_instance.delete_state(message.chat.id)
 
         text = message.text
         result = list(shlex.split(text))
@@ -182,7 +179,6 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         else:
             text = f'\[Current Value: ' + f' *{displayData}*]' + '\n' + \
                 f'Enter {action.name.capitalize()} : '
-            # Save message id for reference
             await bot_instance.edit_message_text(chat_id=message.chat.id, message_id=message.id,
                                                  text=text, reply_markup=KeyboardUtil.create_save_keyboard('save'))
 
@@ -197,7 +193,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         action = Action(actionId)
 
         if (action == Action.cancel):
-            await async_cancel_trx(call.message)
+            await async_cancel_trx(di['current_trx_message'])
         elif (action == Action.done):
             await async_upload_trx(call.message)
         else:
