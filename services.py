@@ -88,6 +88,7 @@ class Action(IntEnum):
     start = 100
     quick_end = 200
     category_list = 300
+    category_end = 301
 
 
 class Formatting():

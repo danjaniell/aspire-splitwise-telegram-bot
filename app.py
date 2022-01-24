@@ -1,3 +1,4 @@
+from ctypes import Union
 import startup
 import shlex
 import asyncio
@@ -25,6 +26,7 @@ startup.configure_services()
 
 trx_categories = aspire_util.get_all_categories(di[Spreadsheet])
 groups = ["group_sel;" + s for s in trx_categories.keys()]
+categories = ["save;" + s for l in trx_categories.values() for s in l]
 
 
 def async_bot_functions(bot_instance: AsyncTeleBot):
@@ -189,12 +191,19 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         di[TransactionData]['Inflow'] = message.text
 
-    @ bot_instance.message_handler(state=Action.category, restrict=True)
-    async def async_get_category(message: types.Message):
+# TODO actual processing of category.
+# Select a category
+# Save selected option in TransactionData
+# return to start menu --> call async_save_callback?
+    @ bot_instance.callback_query_handler(func=lambda c: c.data in categories, state=Action.category_list, restrict=True)
+    async def async_get_category(call: types.CallbackQuery):
         """
-        Read user input and store to Category
+        Get user selection and store to Category
         """
-        di[TransactionData]['Category'] = message.text
+        await bot_instance.set_state(call.message.chat.id, Action.category)
+        action, choice = aspire_util.separate_callback_data(call.data)
+        di[TransactionData]['Category'] = choice
+        await async_save_callback(call)
 
     @ bot_instance.message_handler(state=Action.account, restrict=True)
     async def async_get_account(message: types.Message):
@@ -220,7 +229,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         await bot_instance.edit_message_text(chat_id=call.message.chat.id,
                                              message_id=call.message.message_id,
                                              text='Select Category:',
-                                             reply_markup=aspire_util.create_category_inline(trx_categories[choice], 'cat_selection'))
+                                             reply_markup=aspire_util.create_category_inline(trx_categories[choice], 'save'))
 
     @ bot_instance.callback_query_handler(func=lambda c: c.data == 'save', state=[Action.outflow, Action.inflow, Action.category, Action.account, Action.memo, Action.date])
     async def async_save_callback(call: types.CallbackQuery):
@@ -239,7 +248,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         await bot_instance.delete_state(call.message.chat.id)
         await async_upload(call.message)
 
-    @ bot_instance.message_handler(state='*', commands=['start', 's'], restrict=True)
+    @ bot_instance.message_handler(commands=['start', 's'], restrict=True)
     async def async_command_start(message: types.Message):
         """
         Start the conversation and ask user for input.
@@ -251,7 +260,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
 
 def sync_bot_functions(bot_instance: TeleBot):
     # Set all sync bot handlers inside this function
-    @ bot_instance.message_handler(commands=['start', 's'], restrict=True,)
+    @ bot_instance.message_handler(commands=['start', 's'], restrict=True)
     def command_start(message: types.Message):
         """
         Start the conversation and ask user for input.

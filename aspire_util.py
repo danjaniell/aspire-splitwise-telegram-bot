@@ -168,7 +168,7 @@ def create_category_inline(options, action):
             cats_keyboard[i][j] = types.InlineKeyboardButton(
                 k, callback_data=create_category_callback_data(action, str(k))
             )
-    if action == "cat_selection":
+    if action == "save":
         cats_keyboard.append(
             [
                 types.InlineKeyboardButton(
