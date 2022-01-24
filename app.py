@@ -46,7 +46,9 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
                                         reply_markup=KeyboardUtil.create_save_keyboard('quick_save'))
 
     async def async_upload(message):
-        """Upload info to aspire google sheet"""
+        """
+        Upload info to aspire google sheet
+        """
         upload_data = [
             di[TransactionData]['Date'],
             di[TransactionData]['Outflow'],
@@ -61,7 +63,9 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
 
     @bot_instance.message_handler(regexp='^(A|a)dd(I|i)nc.+$', restrict=True)
     async def async_income_trx(message):
-        """Add income transaction using Today's date, Inflow Amount and Memo"""
+        """
+        Add income transaction using Today's date, Inflow Amount and Memo
+        """
         di[TransactionData].reset()
         text = message.text
         result = list(shlex.split(text))
@@ -80,7 +84,9 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
 
     @bot_instance.message_handler(regexp='^(A|a)dd(E|e)xp.+$', restrict=True)
     async def async_expense_trx(message):
-        """Add expense transaction using Today's date, Outflow Amount and Memo"""
+        """
+        Add expense transaction using Today's date, Outflow Amount and Memo
+        """
         di[TransactionData].reset()
         text = message.text
         result = list(shlex.split(text))
@@ -98,6 +104,9 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         await async_quick_save(message)
 
     async def async_item_selected(action: Action, user_id, message_id):
+        """
+        Process item selected through /start command
+        """
         await bot_instance.set_state(user_id, action)
         data = di[TransactionData][action.name.capitalize()]
         if action == Action.outflow or action == Action.inflow:
@@ -112,6 +121,9 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
 
     @bot_instance.callback_query_handler(func=None, config=di[CallbackData].filter(), state=Action.start, restrict=True)
     async def async_actions_callback(call: types.CallbackQuery):
+        """
+        Read and save state of bot depending on item selected from /start command
+        """
         callback_data: dict = di[CallbackData].parse(
             callback_data=call.data)
         actionId = int(callback_data['action_id'])
@@ -122,20 +134,29 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             await bot_instance.delete_state(call.message.chat.id)
             await bot_instance.edit_message_text(chat_id=user_id, message_id=message_id, text='Transaction cancelled.')
         else:
-            await bot_instance.item_selected(action, user_id, message_id)
+            await async_item_selected(action, user_id, message_id)
 
     @bot_instance.message_handler(state=Action.outflow, restrict=True)
     async def async_get_outflow(message):
+        """
+        Read user input and store to Outflow
+        """
         di[TransactionData]['Outflow'] = message.text
 
     @bot_instance.callback_query_handler(func=lambda c: c.data == 'save')
     async def async_save_callback(call: types.CallbackQuery):
+        """
+        Return to main menu of /start command showing new saved values
+        """
         await bot_instance.set_state(call.from_user.id, Action.start)
         await bot_instance.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                              text='Update:', reply_markup=KeyboardUtil.create_options_keyboard())
 
     @bot_instance.callback_query_handler(func=lambda c: c.data == 'quick_save')
     async def async_savequick_callback(call: types.CallbackQuery):
+        """
+        Clears state and upload to sheets for quick add functions
+        """
         await bot_instance.delete_state(call.message.chat.id)
         await async_upload(call.message)
 
@@ -165,7 +186,9 @@ def sync_bot_functions(bot_instance: TeleBot):
 WEBHOOK_URL_BASE = di['WEBHOOK_URL_BASE']
 WEBHOOK_URL_PATH = "/%s/" % (di[Configuration]['secret'])
 
+
 app = Flask(__name__)
+
 
 if di[Configuration]['run_async']:
     async_bot_functions(di['bot_instance'])
