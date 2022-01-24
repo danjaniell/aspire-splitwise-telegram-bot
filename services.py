@@ -82,9 +82,10 @@ class Action(IntEnum):
     category = 3
     account = 4
     memo = 5
-    end = 100
-    start = 101
-    quick_end = 102
+    cancel = 6
+    done = 7
+    start = 100
+    quick_end = 200
 
 
 class Formatting():
@@ -131,9 +132,12 @@ class KeyboardUtil():
         )
 
     def create_default_options_keyboard():
+        """
+        Menu keyboard for start command
+        """
         keyboard = []
         for action in Action:
-            if (action > Action.end):
+            if (action > Action.cancel):
                 continue
             btnList = [
                 types.InlineKeyboardButton(
@@ -145,11 +149,14 @@ class KeyboardUtil():
         return types.InlineKeyboardMarkup(keyboard)
 
     def create_options_keyboard():
+        """
+        Menu keyboard for updating transaction data
+        """
         keyboard = []
         for action in Action:
-            if (action > Action.end):
+            if (action >= Action.start):
                 continue
-            elif(action == Action.end):
+            elif(action == Action.done or action == Action.cancel):
                 btnList = [
                     types.InlineKeyboardButton(
                         text=action.name.capitalize(),
@@ -158,7 +165,7 @@ class KeyboardUtil():
                     )
                 ]
             else:
-                data = TransactionData.values[action.name.capitalize()]
+                data = di[TransactionData][action.name.capitalize()]
                 if action == Action.outflow or action == Action.inflow:
                     displayData = f'{action.name.capitalize()}: ' + \
                         (di[Configuration]['currency'] +

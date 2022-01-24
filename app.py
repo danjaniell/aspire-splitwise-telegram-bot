@@ -27,7 +27,7 @@ startup.configure_services()
 def async_bot_functions(bot_instance: AsyncTeleBot):
     # Set all async bot handlers inside this function
     @bot_instance.message_handler(state='*', commands=['cancel', 'q'])
-    async def async_command_cancel(message):
+    async def async_command_cancel(message: types.Message):
         """
         Cancel transaction from any state
         """
@@ -35,17 +35,31 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         await bot_instance.send_message(message.chat.id, 'Transaction cancelled.')
 
     @bot_instance.message_handler(state=[Action.outflow, Action.inflow], is_digit=False)
-    async def async_invalid_amt(message):
+    async def async_invalid_amt(message: types.Message):
         await bot_instance.reply_to(message, 'Please enter a number')
 
-    async def async_quick_save(message):
+    async def async_upload_trx(message: types.Message):
+        """
+        Clears state and upload transaction to sheets
+        """
+        await bot_instance.delete_state(message.chat.id)
+        await async_upload(message)
+
+    async def async_cancel_trx(message: types.Message):
+        """
+        Clears state and cancel current transaction
+        """
+        await bot_instance.delete_state(message.chat.id)
+        await bot_instance.edit_message_text(chat_id=message.chat.id, message_id=message.id, text='Transaction cancelled.')
+
+    async def async_quick_save(message: types.Message):
         await bot_instance.set_state(message.from_user.id, Action.quick_end)
         await bot_instance.send_message(message.chat.id,
                                         '\[Received Data]' +
                                         f'\n{di[Formatting].format_data(di[TransactionData])}',
                                         reply_markup=KeyboardUtil.create_save_keyboard('quick_save'))
 
-    async def async_upload(message):
+    async def async_upload(message: types.Message):
         """
         Upload info to aspire google sheet
         """
@@ -62,7 +76,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         await bot_instance.reply_to(message, '✅ Transaction Saved\n')
 
     @bot_instance.message_handler(regexp='^(A|a)dd(I|i)nc.+$', restrict=True)
-    async def async_income_trx(message):
+    async def async_income_trx(message: types.Message):
         """
         Add income transaction using Today's date, Inflow Amount and Memo
         """
@@ -80,10 +94,10 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             di[TransactionData]['Date'] = DateUtil.date_today()
             di[TransactionData]['Inflow'] = inflow
             di[TransactionData]['Memo'] = memo
-        await async_quick_save(message)
+        await async_quick_save(types.Message)
 
     @bot_instance.message_handler(regexp='^(A|a)dd(E|e)xp.+$', restrict=True)
-    async def async_expense_trx(message):
+    async def async_expense_trx(message: types.Message):
         """
         Add expense transaction using Today's date, Outflow Amount and Memo
         """
@@ -101,7 +115,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             di[TransactionData]['Date'] = DateUtil.date_today()
             di[TransactionData]['Outflow'] = outflow
             di[TransactionData]['Memo'] = memo
-        await async_quick_save(message)
+        await async_quick_save(types.Message)
 
     async def async_item_selected(action: Action, user_id, message_id):
         """
@@ -130,24 +144,55 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         action = Action(actionId)
         user_id = call.from_user.id
         message_id = call.message.message_id
-        if (action == Action.end):
-            await bot_instance.delete_state(call.message.chat.id)
-            await bot_instance.edit_message_text(chat_id=user_id, message_id=message_id, text='Transaction cancelled.')
+
+        if (action == Action.cancel):
+            await async_cancel_trx(call.message)
+        elif (action == Action.done):
+            await async_upload_trx(call.message)
         else:
             await async_item_selected(action, user_id, message_id)
 
     @bot_instance.message_handler(state=Action.outflow, restrict=True)
-    async def async_get_outflow(message):
+    async def async_get_outflow(message: types.Message):
         """
         Read user input and store to Outflow
         """
         di[TransactionData]['Outflow'] = message.text
+
+    @bot_instance.message_handler(state=Action.inflow, restrict=True)
+    async def async_get_inflow(message: types.Message):
+        """
+        Read user input and store to Inflow
+        """
+        di[TransactionData]['Inflow'] = message.text
+
+    @bot_instance.message_handler(state=Action.category, restrict=True)
+    async def async_get_category(message: types.Message):
+        """
+        Read user input and store to Category
+        """
+        di[TransactionData]['Category'] = message.text
+
+    @bot_instance.message_handler(state=Action.account, restrict=True)
+    async def async_get_account(message: types.Message):
+        """
+        Read user input and store to Account
+        """
+        di[TransactionData]['Account'] = message.text
+
+    @bot_instance.message_handler(state=Action.memo, restrict=True)
+    async def async_get_memo(message: types.Message):
+        """
+        Read user input and store to Memo
+        """
+        di[TransactionData]['Memo'] = message.text
 
     @bot_instance.callback_query_handler(func=lambda c: c.data == 'save')
     async def async_save_callback(call: types.CallbackQuery):
         """
         Return to main menu of /start command showing new saved values
         """
+        await bot_instance.set_state(call.from_user.id, Action.start)
         await bot_instance.set_state(call.from_user.id, Action.start)
         await bot_instance.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                              text='Update:', reply_markup=KeyboardUtil.create_options_keyboard())
@@ -161,7 +206,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         await async_upload(call.message)
 
     @bot_instance.message_handler(commands=['start', 's'], restrict=True)
-    async def async_command_start(message):
+    async def async_command_start(message: types.Message):
         """
         Start the conversation and ask user for input.
         Initialize with options to fill in.
@@ -173,7 +218,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
 def sync_bot_functions(bot_instance: TeleBot):
     # Set all sync bot handlers inside this function
     @bot_instance.message_handler(commands=['start', 's'], restrict=True,)
-    def command_start(message):
+    def command_start(message: types.Message):
         """
         Start the conversation and ask user for input.
         Initialize with options to fill in.
