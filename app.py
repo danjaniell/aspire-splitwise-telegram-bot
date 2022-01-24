@@ -172,27 +172,24 @@ if di[Configuration]['run_async']:
 else:
     sync_bot_functions(di['bot_instance'])
 
-try:
-    if isinstance(di['bot_instance'], AsyncTeleBot):
-        asyncio.run(di['bot_instance'].delete_webhook(
-            drop_pending_updates=True))
-        time.sleep(0.1)
-        if (di[Configuration]['update_mode'] == 'polling'):
-            asyncio.run(di['bot_instance'].infinity_polling(
-                skip_pending=True))
-        elif (di[Configuration]['update_mode'] == 'webhook'):
-            asyncio.run(di['bot_instance'].set_webhook(
-                url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH))
-    elif isinstance(di['bot_instance'], TeleBot):
-        di['bot_instance'].delete_webhook(drop_pending_updates=True)
-        time.sleep(0.1)
-        if (di[Configuration]['update_mode'] == 'polling'):
-            di['bot_instance'].infinity_polling(skip_pending=True)
-        elif (di[Configuration]['update_mode'] == 'webhook'):
-            di['bot_instance'].set_webhook(
-                url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH)
-except BaseException as e:
-    di[Logger].error(e.message)
+if isinstance(di['bot_instance'], AsyncTeleBot):
+    asyncio.run(di['bot_instance'].delete_webhook(
+        drop_pending_updates=True))
+    time.sleep(0.1)
+    if (di[Configuration]['update_mode'] == 'polling'):
+        asyncio.run(di['bot_instance'].infinity_polling(
+            skip_pending=True))
+    elif (di[Configuration]['update_mode'] == 'webhook'):
+        asyncio.run(di['bot_instance'].set_webhook(
+            url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH))
+elif isinstance(di['bot_instance'], TeleBot):
+    di['bot_instance'].delete_webhook(drop_pending_updates=True)
+    time.sleep(0.1)
+    if (di[Configuration]['update_mode'] == 'polling'):
+        di['bot_instance'].infinity_polling(skip_pending=True)
+    elif (di[Configuration]['update_mode'] == 'webhook'):
+        di['bot_instance'].set_webhook(
+            url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH)
 
 
 @app.route(WEBHOOK_URL_PATH, methods=['POST'])
