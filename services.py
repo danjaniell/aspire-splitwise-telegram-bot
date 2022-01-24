@@ -25,13 +25,6 @@ class ExceptionHandler(telebot.ExceptionHandler):
         di[Logger].error(exception)
 
 
-class AsyncRunOnAsyncFilter(AsyncSimpleCustomFilter):
-    key = 'run_only_if_async'
-
-    async def check(self, message: types.Message):
-        return di[Configuration]['run_async']
-
-
 class AsyncRestrictAccessFilter(AsyncSimpleCustomFilter):
     key = 'restrict'
 
@@ -47,13 +40,6 @@ class AsyncActionsCallbackFilter(AsyncAdvancedCustomFilter):
 
     async def check(self, call: types.CallbackQuery, config: CallbackDataFilter):
         return config.check(query=call)
-
-
-class RunOnAsyncFilter(SimpleCustomFilter):
-    key = 'run_only_if_async'
-
-    def check(self, message: types.Message):
-        return di[Configuration]['run_async']
 
 
 class ActionsCallbackFilter(AdvancedCustomFilter):
@@ -76,13 +62,11 @@ class RestrictAccessFilter(SimpleCustomFilter):
 class BotFactory():
     def __init__(self,
                  restrict_access_filter,
-                 run_on_async_filter,
                  state_filter,
                  is_digit_filter,
                  actions_callback_filter,
                  bot_instance):
         bot_instance.add_custom_filter(restrict_access_filter)
-        bot_instance.add_custom_filter(run_on_async_filter)
         bot_instance.add_custom_filter(state_filter)
         bot_instance.add_custom_filter(is_digit_filter)
         bot_instance.add_custom_filter(actions_callback_filter)

@@ -13,12 +13,10 @@ from services import (
     KeyboardUtil,
     RestrictAccessFilter,
     ExceptionHandler,
-    RunOnAsyncFilter,
     StateFilter,
     IsDigitFilter,
     ActionsCallbackFilter,
     AsyncRestrictAccessFilter,
-    AsyncRunOnAsyncFilter,
     AsyncStateFilter,
     AsyncIsDigitFilter,
     AsyncActionsCallbackFilter
@@ -55,7 +53,6 @@ def configure_services() -> None:
                                     exception_handler=ExceptionHandler())
         di['bot_instance'] = BotFactory(bot_instance=bot_instance,
                                         restrict_access_filter=AsyncRestrictAccessFilter(),
-                                        run_on_async_filter=AsyncRunOnAsyncFilter(),
                                         state_filter=AsyncStateFilter(
                                             bot_instance),
                                         is_digit_filter=AsyncIsDigitFilter(),
@@ -67,7 +64,6 @@ def configure_services() -> None:
                                threaded=False)
         di['bot_instance'] = BotFactory(bot_instance=bot_instance,
                                         restrict_access_filter=RestrictAccessFilter(),
-                                        run_on_async_filter=RunOnAsyncFilter(),
                                         state_filter=StateFilter(bot_instance),
                                         is_digit_filter=IsDigitFilter(),
                                         actions_callback_filter=ActionsCallbackFilter()).create_bot()

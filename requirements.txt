@@ -7,4 +7,3 @@ gunicorn
 asyncio
 kink
 aiohttp
-gevent
