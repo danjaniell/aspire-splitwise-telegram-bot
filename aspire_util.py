@@ -179,28 +179,12 @@ def create_category_inline(options, action):
     return types.InlineKeyboardMarkup(cats_keyboard)
 
 
-def handle_category_inline(update, context, categories):
-    return_data = (False, None)
-    query = update.callback_query
-    action, choice = separate_callback_data(query.data)
-
-    if action == "group_sel":
-        context.bot.edit_message_text(
-            text="Pick Category",
-            chat_id=query.message.chat_id,
-            message_id=query.message.message_id,
-            reply_markup=create_category_inline(
-                categories[str(choice)], "cat_selection"
-            ),
-        )
-    elif action == "back":
-        context.bot.edit_message_text(
-            text="Pick Group",
-            chat_id=query.message.chat_id,
-            message_id=query.message.message_id,
-            reply_markup=create_category_inline(
-                categories.keys(), "group_sel"),
-        )
-    elif action == "cat_selection":
-        return_data = (True, choice)
-    return return_data
+def create_account_inline(trx_accounts, action):
+    accs_keyboard = [trx_accounts[i: i + 2]
+                     for i in range(0, len(trx_accounts), 2)]
+    for i, x in enumerate(accs_keyboard):
+        for j, k in enumerate(x):
+            accs_keyboard[i][j] = types.InlineKeyboardButton(
+                k, callback_data=create_category_callback_data(action, str(k))
+            )
+    return types.InlineKeyboardMarkup(accs_keyboard)

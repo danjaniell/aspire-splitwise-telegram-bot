@@ -25,8 +25,11 @@ from gspread import Spreadsheet
 startup.configure_services()
 
 trx_categories = aspire_util.get_all_categories(di[Spreadsheet])
+trx_accounts = [i for s in aspire_util.get_accounts(
+    di[Spreadsheet]) for i in s]
 groups = ["group_sel;" + s for s in trx_categories.keys()]
 categories = ["save;" + s for l in trx_categories.values() for s in l]
+accounts = ["acc_sel;" + s for s in trx_accounts]
 
 
 def async_bot_functions(bot_instance: AsyncTeleBot):
@@ -132,12 +135,16 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         Return to category groups selection menu
         """
         await bot_instance.set_state(call.message.chat.id, Action.category)
-        await category_sel_start(call.message)
+        await category_select_start(call.message)
 
-    async def category_sel_start(message: types.Message):
+    async def category_select_start(message: types.Message):
         # Creates a keyboard, each key has a callback_data : group_sel;"group name" e.g. group_sel:"Expenses"
         await bot_instance.edit_message_text(chat_id=message.chat.id, message_id=message.id,
-                                             text='Select Group', reply_markup=aspire_util.create_category_inline(trx_categories.keys(), "group_sel"))
+                                             text='Select Group:', reply_markup=aspire_util.create_category_inline(trx_categories.keys(), 'group_sel'))
+
+    async def account_sel_start(message: types.Message):
+        await bot_instance.edit_message_text(chat_id=message.chat.id, message_id=message.id,
+                                             text='Select Account:', reply_markup=aspire_util.create_account_inline(trx_accounts, 'acc_sel'))
 
     async def async_item_selected(action: Action, message: types.Message):
         """
@@ -153,7 +160,9 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             displayData = data if data != '' else '\'\''
 
         if action == Action.category:
-            await category_sel_start(message)
+            await category_select_start(message)
+        elif action == Action.account:
+            await account_sel_start(message)
         else:
             text = f'\[Current Value: ' + f' *{displayData}*]' + '\n' + \
                 f'Enter {action.name.capitalize()} : '
@@ -200,12 +209,14 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         di[TransactionData]['Category'] = choice
         await async_save_callback(call)
 
-    @ bot_instance.message_handler(state=Action.account, restrict=True)
-    async def async_get_account(message: types.Message):
+    @ bot_instance.callback_query_handler(func=lambda c: c.data in accounts, state=Action.account, restrict=True)
+    async def async_get_account(call: types.CallbackQuery):
         """
         Read user input and store to Account
         """
-        di[TransactionData]['Account'] = message.text
+        action, choice = aspire_util.separate_callback_data(call.data)
+        di[TransactionData]['Account'] = choice
+        await async_save_callback(call)
 
     @ bot_instance.message_handler(state=Action.memo, restrict=True)
     async def async_get_memo(message: types.Message):
@@ -215,7 +226,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         di[TransactionData]['Memo'] = message.text
 
     @ bot_instance.callback_query_handler(func=lambda c: c.data in groups, state=Action.category)
-    async def async_list_category(call: types.CallbackQuery):
+    async def async_list_categories(call: types.CallbackQuery):
         """
         Show categories as InlineKeyboard
         """
