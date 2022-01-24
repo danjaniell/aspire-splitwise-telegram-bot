@@ -172,7 +172,7 @@ def create_category_inline(options, action):
         cats_keyboard.append(
             [
                 types.InlineKeyboardButton(
-                    "< Back", callback_data=create_category_callback_data("back", "")
+                    "< Back", callback_data=create_category_callback_data("back", "category")
                 )
             ]
         )

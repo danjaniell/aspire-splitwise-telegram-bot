@@ -120,6 +120,19 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             di[TransactionData]['Memo'] = memo
         await async_quick_save(message)
 
+    @ bot_instance.callback_query_handler(func=lambda c: c.data == 'back;category', state=Action.category_list)
+    async def async_back_to_category_groups_menu(call: types.CallbackQuery):
+        """
+        Return to category groups selection menu
+        """
+        await bot_instance.set_state(call.message.chat.id, Action.category)
+        await category_sel_start(call.message)
+
+    async def category_sel_start(message: types.Message):
+        # Creates a keyboard, each key has a callback_data : group_sel;"group name" e.g. group_sel:"Expenses"
+        await bot_instance.edit_message_text(chat_id=message.chat.id, message_id=message.id,
+                                             text='Select Group', reply_markup=aspire_util.create_category_inline(trx_categories.keys(), "group_sel"))
+
     async def async_item_selected(action: Action, message: types.Message):
         """
         Process item selected through /start command
@@ -134,9 +147,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             displayData = data if data != '' else '\'\''
 
         if action == Action.category:
-            # Creates a keyboard, each key has a callback_data : group_sel;"group name" e.g. group_sel:"Expenses"
-            await bot_instance.edit_message_text(chat_id=message.chat.id, message_id=message.id,
-                                                 text='Select Group', reply_markup=aspire_util.create_category_inline(trx_categories.keys(), "group_sel"))
+            await category_sel_start(message)
         else:
             text = f'\[Current Value: ' + f' *{displayData}*]' + '\n' + \
                 f'Enter {action.name.capitalize()} : '
@@ -200,9 +211,8 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Show categories as InlineKeyboard
         """
-        # TODO
         await bot_instance.set_state(call.message.chat.id, Action.category_list)
-        choice = call.data.split(';')[1]
+        action, choice = aspire_util.separate_callback_data(call.data)
         await bot_instance.edit_message_text(chat_id=call.message.chat.id,
                                              message_id=call.message.message_id,
                                              text='Select Category:',
