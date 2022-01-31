@@ -21,6 +21,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Clears state and cancel current transaction
         """
+        di[TransactionData].reset()
         message = di["current_trx_message"]
         await bot_instance.delete_state(message.chat.id)
         await bot_instance.edit_message_text(

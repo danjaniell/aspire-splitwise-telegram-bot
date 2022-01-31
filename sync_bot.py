@@ -20,6 +20,7 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Clears state and cancel current transaction
         """
+        di[TransactionData].reset()
         message = di["current_trx_message"]
         bot_instance.delete_state(message.chat.id)
         bot_instance.edit_message_text(
