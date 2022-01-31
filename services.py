@@ -1,3 +1,4 @@
+import platform
 import telebot
 from app_config import Configuration
 from datetime import datetime
@@ -18,6 +19,8 @@ from enum import IntEnum
 from zoneinfo import ZoneInfo
 from typing import Any, Dict
 from logging import Logger
+from functools import wraps
+from asyncio.proactor_events import _ProactorBasePipeTransport
 
 
 class ExceptionHandler(telebot.ExceptionHandler):
@@ -187,3 +190,21 @@ class KeyboardUtil:
                 ]
             keyboard.append(btnList)
         return types.InlineKeyboardMarkup(keyboard)
+
+
+def silence_event_loop_closed(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            return func(self, *args, **kwargs)
+        except RuntimeError as e:
+            if str(e) != "Event loop is closed":
+                raise
+
+    return wrapper
+
+
+if platform.system() == "Windows":
+    _ProactorBasePipeTransport.__del__ = silence_event_loop_closed(
+        _ProactorBasePipeTransport.__del__
+    )

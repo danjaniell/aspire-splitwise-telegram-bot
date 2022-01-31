@@ -82,10 +82,13 @@ def configure_services() -> None:
     di[Client] = auth.service_account_from_dict(
         di[Configuration]["credentials_json"], scopes=scope
     )
-    di[Spreadsheet] = di[Client].open_by_key(di[Configuration]["worksheet_id"])
-    di["trx_accounts"] = [
-        item
-        for sublist in aspire_util.get_accounts(di[Spreadsheet])
-        for item in sublist
-    ]
+
     di["WEBHOOK_URL_BASE"] = di[Configuration]["webhook_base_url"]
+    spreadsheet = di[Client].open_by_key(di[Configuration]["worksheet_id"])
+    trx_categories = aspire_util.get_all_categories(spreadsheet)
+    di["trx_categories"] = trx_categories
+    trx_accounts = [i for s in aspire_util.get_accounts(spreadsheet) for i in s]
+    di["trx_accounts"] = trx_accounts
+    di["groups"] = ["group_sel;" + s for s in trx_categories.keys()]
+    di["categories"] = ["save;" + s for l in trx_categories.values() for s in l]
+    di["accounts"] = ["acc_sel;" + s for s in trx_accounts]
