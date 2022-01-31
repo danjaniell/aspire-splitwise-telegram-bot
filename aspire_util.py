@@ -10,8 +10,7 @@ def get_all_categories(spreadsheet) -> dict[str, list]:
     values = worksheet.get("r_ConfigurationData")
 
     # Find groups and exclude credit card payments
-    groups = [i[1]
-              for i in values if i[0] == "✦" and "Credit Card" not in i[1]]
+    groups = [i[1] for i in values if i[0] == "✦" and "Credit Card" not in i[1]]
 
     # get categories from configuration worksheet
     categories = []
@@ -41,8 +40,12 @@ def append_trx(spreadsheet, data: list[str]):
     worksheet = spreadsheet.worksheet("Transactions")
     next_row = next(n for n in worksheet.range("trx_Dates") if n.value == "")
     rowRange = next_row.address + ":H" + str(next_row.row)
-    worksheet.append_row(values=data, table_range=rowRange,
-                         value_input_option=utils.ValueInputOption.user_entered, insert_data_option=0)
+    worksheet.append_row(
+        values=data,
+        table_range=rowRange,
+        value_input_option=utils.ValueInputOption.user_entered,
+        insert_data_option=0,
+    )
 
 
 def separate_callback_data(data):
@@ -84,8 +87,7 @@ def create_calendar(year=None, month=None):
         row = []
         for day in week:
             if day == 0:
-                row.append(types.InlineKeyboardButton(
-                    " ", callback_data=data_ignore))
+                row.append(types.InlineKeyboardButton(" ", callback_data=data_ignore))
             else:
                 row.append(
                     types.InlineKeyboardButton(
@@ -100,14 +102,12 @@ def create_calendar(year=None, month=None):
     row = [
         types.InlineKeyboardButton(
             "<",
-            callback_data=create_calendar_callback_data(
-                "PREV-MONTH", year, month, day),
+            callback_data=create_calendar_callback_data("PREV-MONTH", year, month, day),
         ),
         types.InlineKeyboardButton(" ", callback_data=data_ignore),
         types.InlineKeyboardButton(
             ">",
-            callback_data=create_calendar_callback_data(
-                "NEXT-MONTH", year, month, day),
+            callback_data=create_calendar_callback_data("NEXT-MONTH", year, month, day),
         ),
     ]
     keyboard.append(row)
@@ -145,7 +145,8 @@ async def async_process_calendar_selection(call, bot_instance):
         )
     else:
         await bot_instance.answer_callback_query(
-            callback_query_id=call.id, text="Something went wrong!")
+            callback_query_id=call.id, text="Something went wrong!"
+        )
     return ret_data
 
 
@@ -154,8 +155,7 @@ def create_category_callback_data(action, selection):
 
 
 def create_category_inline(options, action):
-    cats_keyboard = [list(options)[i: i + 2]
-                     for i in range(0, len(list(options)), 2)]
+    cats_keyboard = [list(options)[i : i + 2] for i in range(0, len(list(options)), 2)]
     for i, x in enumerate(cats_keyboard):
         for j, k in enumerate(x):
             cats_keyboard[i][j] = types.InlineKeyboardButton(
@@ -165,7 +165,8 @@ def create_category_inline(options, action):
         cats_keyboard.append(
             [
                 types.InlineKeyboardButton(
-                    "< Back", callback_data=create_category_callback_data("back", "category")
+                    "< Back",
+                    callback_data=create_category_callback_data("back", "category"),
                 )
             ]
         )
@@ -173,8 +174,7 @@ def create_category_inline(options, action):
 
 
 def create_account_inline(trx_accounts, action):
-    accs_keyboard = [trx_accounts[i: i + 2]
-                     for i in range(0, len(trx_accounts), 2)]
+    accs_keyboard = [trx_accounts[i : i + 2] for i in range(0, len(trx_accounts), 2)]
     for i, x in enumerate(accs_keyboard):
         for j, k in enumerate(x):
             accs_keyboard[i][j] = types.InlineKeyboardButton(

@@ -26,46 +26,48 @@ class ExceptionHandler(telebot.ExceptionHandler):
 
 
 class AsyncRestrictAccessFilter(AsyncSimpleCustomFilter):
-    key = 'restrict'
+    key = "restrict"
 
     async def check(self, message: types.Message):
         return (
-            di[Configuration]['restrict_access']
-            and message.from_user.id in di[Configuration]['list_of_users']
+            di[Configuration]["restrict_access"]
+            and message.from_user.id in di[Configuration]["list_of_users"]
         )
 
 
 class AsyncActionsCallbackFilter(AsyncAdvancedCustomFilter):
-    key = 'config'
+    key = "config"
 
     async def check(self, call: types.CallbackQuery, config: CallbackDataFilter):
         return config.check(query=call)
 
 
 class ActionsCallbackFilter(AdvancedCustomFilter):
-    key = 'config'
+    key = "config"
 
     def check(self, call: types.CallbackQuery, config: CallbackDataFilter):
         return config.check(query=call)
 
 
 class RestrictAccessFilter(SimpleCustomFilter):
-    key = 'restrict'
+    key = "restrict"
 
     def check(self, message: types.Message):
         return (
-            di[Configuration]['restrict_access']
-            and message.from_user.id in di[Configuration]['list_of_users']
+            di[Configuration]["restrict_access"]
+            and message.from_user.id in di[Configuration]["list_of_users"]
         )
 
 
-class BotFactory():
-    def __init__(self,
-                 restrict_access_filter,
-                 state_filter,
-                 is_digit_filter,
-                 actions_callback_filter,
-                 bot_instance):
+class BotFactory:
+    def __init__(
+        self,
+        restrict_access_filter,
+        state_filter,
+        is_digit_filter,
+        actions_callback_filter,
+        bot_instance,
+    ):
         bot_instance.add_custom_filter(restrict_access_filter)
         bot_instance.add_custom_filter(state_filter)
         bot_instance.add_custom_filter(is_digit_filter)
@@ -91,46 +93,42 @@ class Action(IntEnum):
     category_end = 301
 
 
-class Formatting():
+class Formatting:
     def format_data(self, user_data: Dict[str, str]) -> str:
         """Helper function for formatting the gathered user info."""
         data = []
         for key, value in user_data.items():
-            if key in ('Outflow', 'Inflow') and value != '':
-                data.append(f'*{key}* : ' +
-                            di[Configuration]['currency'] + f' {int(value):,}')
+            if key in ("Outflow", "Inflow") and value != "":
+                data.append(
+                    f"*{key}* : " + di[Configuration]["currency"] + f" {int(value):,}"
+                )
             else:
-                data.append(f'*{key}* : {value}')
-        return '\n'.join(data).join(['\n', '\n'])
+                data.append(f"*{key}* : {value}")
+        return "\n".join(data).join(["\n", "\n"])
 
 
-class DateUtil():
+class DateUtil:
     def date_today() -> str:
-        today = datetime.now(tz=ZoneInfo('Hongkong'))
-        today = str(today.strftime('%m/%d/%y'))
+        today = datetime.now(tz=ZoneInfo("Hongkong"))
+        today = str(today.strftime("%m/%d/%y"))
         return today
 
 
 class TransactionData(dict[str, Any]):
     def reset(self):
-        self['Date'] = ''
-        self['Outflow'] = ''
-        self['Inflow'] = ''
-        self['Category'] = ''
-        self['Account'] = ''
-        self['Memo'] = ''
+        self["Date"] = ""
+        self["Outflow"] = ""
+        self["Inflow"] = ""
+        self["Category"] = ""
+        self["Account"] = ""
+        self["Memo"] = ""
 
 
-class KeyboardUtil():
+class KeyboardUtil:
     def create_save_keyboard(callback_data: str):
         return types.InlineKeyboardMarkup(
             keyboard=[
-                [
-                    types.InlineKeyboardButton(
-                        text='💾 Save',
-                        callback_data=callback_data
-                    )
-                ]
+                [types.InlineKeyboardButton(text="💾 Save", callback_data=callback_data)]
             ]
         )
 
@@ -140,12 +138,12 @@ class KeyboardUtil():
         """
         keyboard = []
         for action in Action:
-            if (action > Action.cancel):
+            if action > Action.cancel:
                 continue
             btnList = [
                 types.InlineKeyboardButton(
                     text=action.name.capitalize(),
-                    callback_data=di[CallbackData].new(action_id=int(action))
+                    callback_data=di[CallbackData].new(action_id=int(action)),
                 )
             ]
             keyboard.append(btnList)
@@ -157,30 +155,34 @@ class KeyboardUtil():
         """
         keyboard = []
         for action in Action:
-            if (action >= Action.start):
+            if action >= Action.start:
                 continue
-            elif(action == Action.done or action == Action.cancel):
+            elif action == Action.done or action == Action.cancel:
                 btnList = [
                     types.InlineKeyboardButton(
                         text=action.name.capitalize(),
-                        callback_data=di[CallbackData].new(
-                            action_id=int(action))
+                        callback_data=di[CallbackData].new(action_id=int(action)),
                     )
                 ]
             else:
                 data = di[TransactionData][action.name.capitalize()]
                 if action == Action.outflow or action == Action.inflow:
-                    displayData = f'{action.name.capitalize()}: ' + \
-                        (di[Configuration]['currency'] +
-                         f' {data}') if data != '' else action.name.capitalize()
+                    displayData = (
+                        f"{action.name.capitalize()}: "
+                        + (di[Configuration]["currency"] + f" {data}")
+                        if data != ""
+                        else action.name.capitalize()
+                    )
                 else:
-                    displayData = f'{action.name.capitalize()}: ' + \
-                        data if data != '' else action.name.capitalize()
+                    displayData = (
+                        f"{action.name.capitalize()}: " + data
+                        if data != ""
+                        else action.name.capitalize()
+                    )
                 btnList = [
                     types.InlineKeyboardButton(
                         text=f"{displayData}",
-                        callback_data=di[CallbackData].new(
-                            action_id=int(action))
+                        callback_data=di[CallbackData].new(action_id=int(action)),
                     )
                 ]
             keyboard.append(btnList)
