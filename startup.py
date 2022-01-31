@@ -85,6 +85,7 @@ def configure_services() -> None:
 
     di["WEBHOOK_URL_BASE"] = di[Configuration]["webhook_base_url"]
     spreadsheet = di[Client].open_by_key(di[Configuration]["worksheet_id"])
+    di[Spreadsheet] = spreadsheet
     trx_categories = aspire_util.get_all_categories(spreadsheet)
     di["trx_categories"] = trx_categories
     trx_accounts = [i for s in aspire_util.get_accounts(spreadsheet) for i in s]

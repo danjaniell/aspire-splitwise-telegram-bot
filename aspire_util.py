@@ -150,6 +150,41 @@ async def async_process_calendar_selection(call, bot_instance):
     return ret_data
 
 
+def process_calendar_selection(call, bot_instance):
+    """
+    Process the callback_query. This method generates a new calendar if forward or
+    backward is pressed. This method should be called inside a CallbackQueryHandler.
+    """
+    ret_data = (False, None)
+    (_, action, year, month, day) = separate_callback_data(call.data)
+    curr = datetime.datetime(int(year), int(month), 1)
+    if action == "IGNORE":
+        bot_instance.answer_callback_query(callback_query_id=call.id)
+    elif action == "DAY":
+        ret_data = True, datetime.datetime(int(year), int(month), int(day))
+    elif action == "PREV-MONTH":
+        pre = curr - datetime.timedelta(days=1)
+        bot_instance.edit_message_text(
+            text=call.message.text,
+            chat_id=call.message.chat.id,
+            message_id=call.message.id,
+            reply_markup=create_calendar(int(pre.year), int(pre.month)),
+        )
+    elif action == "NEXT-MONTH":
+        ne = curr + datetime.timedelta(days=31)
+        bot_instance.edit_message_text(
+            text=call.message.text,
+            chat_id=call.message.chat.id,
+            message_id=call.message.id,
+            reply_markup=create_calendar(int(ne.year), int(ne.month)),
+        )
+    else:
+        bot_instance.answer_callback_query(
+            callback_query_id=call.id, text="Something went wrong!"
+        )
+    return ret_data
+
+
 def create_category_callback_data(action, selection):
     return action + ";" + selection
 
