@@ -49,12 +49,11 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         current_action = await bot_instance.get_state(message.chat.id)
         di[TransactionData][current_action.name.capitalize()] = message.text
-        x = di["current_trx_message"]
         await async_item_selected(current_action, di["current_trx_message"])
 
     async def async_quick_save(message: types.Message):
         await bot_instance.set_state(message.chat.id, Action.quick_end)
-        await bot_instance.send_message(
+        di["current_trx_message"] = await bot_instance.send_message(
             message.chat.id,
             "\[Received Data]" + f"\n{di[Formatting].format_data(di[TransactionData])}",
             reply_markup=KeyboardUtil.create_save_keyboard("quick_save"),
@@ -101,7 +100,6 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             di[TransactionData]["Memo"] = memo
         await async_quick_save(message)
 
-    # Do all async bot functions in sync bot
     @bot_instance.message_handler(regexp="^(A|a)dd(E|e)xp.+$", restrict=True)
     async def async_expense_trx(message: types.Message):
         """
