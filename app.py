@@ -1,11 +1,9 @@
-from ctypes import Union
 import startup
 import shlex
 import asyncio
 import time
 import flask
 import aspire_util
-from logging import Logger
 from flask import Flask
 from kink import di
 from app_config import Configuration
