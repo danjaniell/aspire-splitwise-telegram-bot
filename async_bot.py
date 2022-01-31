@@ -55,9 +55,9 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
     async def async_quick_save(message: types.Message):
         await bot_instance.set_state(message.chat.id, Action.quick_end)
         di["current_trx_message"] = await bot_instance.send_message(
-            message.chat.id,
-            "\[Received Data]" + f"\n{di[Formatting].format_data(di[TransactionData])}",
-            reply_markup=KeyboardUtil.create_save_keyboard("quick_save"),
+            chat_id=message.chat.id,
+            text="Current Transaction:",
+            reply_markup=KeyboardUtil.create_options_keyboard(),
         )
 
     async def async_upload(message: types.Message):
@@ -198,7 +198,10 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             )
 
     @bot_instance.callback_query_handler(
-        func=None, config=di[CallbackData].filter(), state=Action.start, restrict=True
+        func=None,
+        config=di[CallbackData].filter(),
+        state=[Action.start, Action.quick_end],
+        restrict=True,
     )
     async def async_actions_callback(call: types.CallbackQuery):
         """
