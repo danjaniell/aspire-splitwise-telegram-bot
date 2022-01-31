@@ -139,17 +139,16 @@ class KeyboardUtil:
         """
         Menu keyboard for start command
         """
-        keyboard = []
-        for action in Action:
-            if action > Action.cancel:
-                continue
-            btnList = [
-                types.InlineKeyboardButton(
-                    text=action.name.capitalize(),
-                    callback_data=di[CallbackData].new(action_id=int(action)),
+        filtered_actions = list(filter(lambda x: x <= Action.cancel, list(Action)))
+        keyboard = [
+            filtered_actions[i : i + 2] for i in range(0, len(filtered_actions), 2)
+        ]
+        for i, x in enumerate(keyboard):
+            for j, k in enumerate(x):
+                keyboard[i][j] = types.InlineKeyboardButton(
+                    k.name.capitalize(),
+                    callback_data=di[CallbackData].new(action_id=int(k)),
                 )
-            ]
-            keyboard.append(btnList)
         return types.InlineKeyboardMarkup(keyboard)
 
     def create_options_keyboard():
@@ -157,10 +156,8 @@ class KeyboardUtil:
         Menu keyboard for updating transaction data
         """
         keyboard = []
-        for action in Action:
-            if action >= Action.start:
-                continue
-            elif action == Action.done or action == Action.cancel:
+        for action in list(filter(lambda x: x <= Action.done, list(Action))):
+            if action == Action.done or action == Action.cancel:
                 btnList = [
                     types.InlineKeyboardButton(
                         text=action.name.capitalize(),
