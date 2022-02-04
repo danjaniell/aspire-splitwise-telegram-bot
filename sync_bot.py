@@ -1,10 +1,12 @@
 import shlex
 import aspire_util
+from kink.errors.service_error import ServiceError
+from logging import Logger
 from kink import di
 from app_config import Configuration
 from telebot.callback_data import CallbackData
 from telebot import TeleBot, types
-from services import Action, Formatting, TransactionData, DateUtil, KeyboardUtil
+from services import Action, TransactionData, DateUtil, KeyboardUtil
 from gspread import Spreadsheet
 
 
@@ -22,7 +24,8 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         di[TransactionData].reset()
         message = di["current_trx_message"]
-        bot_instance.delete_state(di["state"])
+        if bot_instance.get_state(di["state"]):
+            bot_instance.delete_state(di["state"])
         bot_instance.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.id,
@@ -80,6 +83,10 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Add income transaction using Today's date, Inflow Amount and Memo
         """
+        try:
+            cancel_trx(di["current_trx_message"])
+        except ServiceError as e:
+            print(getattr(e, "message", repr(e)))
         di["state"] = message.from_user.id
         di[TransactionData].reset()
 
@@ -109,6 +116,10 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Add expense transaction using Today's date, Outflow Amount and Memo
         """
+        try:
+            cancel_trx(di["current_trx_message"])
+        except ServiceError as e:
+            print(getattr(e, "message", repr(e)))
         di["state"] = message.from_user.id
         di[TransactionData].reset()
 
@@ -314,6 +325,10 @@ def sync_bot_functions(bot_instance: TeleBot):
         Start the conversation and ask user for input.
         Initialize with options to fill in.
         """
+        try:
+            cancel_trx(di["current_trx_message"])
+        except ServiceError as e:
+            print(getattr(e, "message", repr(e)))
         di["state"] = message.from_user.id
         bot_instance.set_state(di["state"], Action.start)
         di[TransactionData]["Date"] = DateUtil.date_today()

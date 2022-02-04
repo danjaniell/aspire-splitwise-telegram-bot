@@ -1,11 +1,13 @@
 import shlex
 import aspire_util
+from kink.errors.service_error import ServiceError
+from logging import Logger
 from kink import di
 from app_config import Configuration
 from telebot.async_telebot import AsyncTeleBot
 from telebot.callback_data import CallbackData
 from telebot import types
-from services import Action, Formatting, TransactionData, DateUtil, KeyboardUtil
+from services import Action, TransactionData, DateUtil, KeyboardUtil
 from gspread import Spreadsheet
 
 
@@ -23,7 +25,8 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         di[TransactionData].reset()
         message = di["current_trx_message"]
-        await bot_instance.delete_state(di["state"])
+        if await bot_instance.get_state(di["state"]):
+            await bot_instance.delete_state(di["state"])
         await bot_instance.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.id,
@@ -81,6 +84,10 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Add income transaction using Today's date, Inflow Amount and Memo
         """
+        try:
+            await async_cancel_trx(di["current_trx_message"])
+        except ServiceError as e:
+            print(getattr(e, "message", repr(e)))
         di["state"] = message.from_user.id
         di[TransactionData].reset()
 
@@ -110,6 +117,10 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Add expense transaction using Today's date, Outflow Amount and Memo
         """
+        try:
+            await async_cancel_trx(di["current_trx_message"])
+        except ServiceError as e:
+            print(getattr(e, "message", repr(e)))
         di["state"] = message.from_user.id
         di[TransactionData].reset()
 
@@ -317,6 +328,10 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         Start the conversation and ask user for input.
         Initialize with options to fill in.
         """
+        try:
+            await async_cancel_trx(di["current_trx_message"])
+        except ServiceError as e:
+            print(getattr(e, "message", repr(e)))
         di["state"] = message.from_user.id
         await bot_instance.set_state(di["state"], Action.start)
         di[TransactionData]["Date"] = DateUtil.date_today()
