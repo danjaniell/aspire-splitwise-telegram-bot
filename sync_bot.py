@@ -1,7 +1,6 @@
 import shlex
 import aspire_util
 from kink.errors.service_error import ServiceError
-from logging import Logger
 from kink import di
 from app_config import Configuration
 from telebot.callback_data import CallbackData
@@ -86,7 +85,11 @@ def sync_bot_functions(bot_instance: TeleBot):
         try:
             cancel_trx(di["current_trx_message"])
         except ServiceError as e:
-            print(getattr(e, "message", repr(e)))
+            print("No current transaction.")
+        except Exception as e:
+            error_msg = getattr(e, "message", repr(e))
+            if "Bad Request: message is not modified" in error_msg:
+                print("Previous transaction was already cancelled.")
         di["state"] = message.from_user.id
         di[TransactionData].reset()
 
@@ -119,7 +122,12 @@ def sync_bot_functions(bot_instance: TeleBot):
         try:
             cancel_trx(di["current_trx_message"])
         except ServiceError as e:
-            print(getattr(e, "message", repr(e)))
+            print("No current transaction.")
+        except Exception as e:
+            error_msg = getattr(e, "message", repr(e))
+            if "Bad Request: message is not modified" in error_msg:
+                print("Previous transaction was already cancelled.")
+
         di["state"] = message.from_user.id
         di[TransactionData].reset()
 
@@ -328,7 +336,11 @@ def sync_bot_functions(bot_instance: TeleBot):
         try:
             cancel_trx(di["current_trx_message"])
         except ServiceError as e:
-            print(getattr(e, "message", repr(e)))
+            print("No current transaction.")
+        except Exception as e:
+            error_msg = getattr(e, "message", repr(e))
+            if "Bad Request: message is not modified" in error_msg:
+                print("Previous transaction was already cancelled.")
         di["state"] = message.from_user.id
         bot_instance.set_state(di["state"], Action.start)
         di[TransactionData]["Date"] = DateUtil.date_today()
