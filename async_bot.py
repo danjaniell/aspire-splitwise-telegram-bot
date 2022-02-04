@@ -23,7 +23,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         di[TransactionData].reset()
         message = di["current_trx_message"]
-        await bot_instance.delete_state(message.from_user.id)
+        await bot_instance.delete_state(di["state"])
         await bot_instance.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.id,
@@ -38,7 +38,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Clears state and upload transaction to sheets
         """
-        await bot_instance.delete_state(message.from_user.id)
+        await bot_instance.delete_state(di["state"])
         await async_upload(message)
 
     @bot_instance.message_handler(
@@ -48,12 +48,12 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Saves user input to selected option
         """
-        current_action = await bot_instance.get_state(message.from_user.id)
+        current_action = await bot_instance.get_state(di["state"])
         di[TransactionData][current_action.name.capitalize()] = message.text
         await async_item_selected(current_action, di["current_trx_message"])
 
     async def async_quick_save(message: types.Message):
-        await bot_instance.set_state(message.from_user.id, Action.quick_end)
+        await bot_instance.set_state(di["state"], Action.quick_end)
         di["current_trx_message"] = await bot_instance.send_message(
             chat_id=message.chat.id,
             text="Current Transaction:",
@@ -81,9 +81,10 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Add income transaction using Today's date, Inflow Amount and Memo
         """
+        di["state"] = message.from_user.id
         di[TransactionData].reset()
-        if await bot_instance.get_state(message.from_user.id):
-            await bot_instance.delete_state(message.from_user.id)
+        if await bot_instance.get_state(di["state"]):
+            await bot_instance.delete_state(di["state"])
 
         text = message.text
         result = list(shlex.split(text))
@@ -106,9 +107,10 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Add expense transaction using Today's date, Outflow Amount and Memo
         """
+        di["state"] = message.from_user.id
         di[TransactionData].reset()
-        if await bot_instance.get_state(message.from_user.id):
-            await bot_instance.delete_state(message.from_user.id)
+        if await bot_instance.get_state(di["state"]):
+            await bot_instance.delete_state(di["state"])
 
         text = message.text
         result = list(shlex.split(text))
@@ -133,7 +135,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Return to category groups selection menu
         """
-        await bot_instance.set_state(call.message.from_user.id, Action.category)
+        await bot_instance.set_state(di["state"], Action.category)
         await category_select_start(call.message)
 
     async def category_select_start(message: types.Message):
@@ -167,7 +169,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Process item selected through /start command
         """
-        await bot_instance.set_state(message.from_user.id, action)
+        await bot_instance.set_state(di["state"], action)
         data = di[TransactionData][action.name.capitalize()]
 
         if action == Action.outflow or action == Action.inflow:
@@ -259,7 +261,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Show categories as InlineKeyboard
         """
-        await bot_instance.set_state(call.message.from_user.id, Action.category_list)
+        await bot_instance.set_state(di["state"], Action.category_list)
         action, choice = aspire_util.separate_callback_data(call.data)
         await bot_instance.edit_message_text(
             chat_id=call.message.chat.id,
@@ -285,7 +287,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Return to main menu of /start command showing new saved values
         """
-        await bot_instance.set_state(call.message.from_user.id, Action.start)
+        await bot_instance.set_state(di["state"], Action.start)
         await bot_instance.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
@@ -300,7 +302,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         Clears state and upload to sheets for quick add functions
         """
-        await bot_instance.delete_state(call.message.from_user.id)
+        await bot_instance.delete_state(di["state"])
         await async_upload(call.message)
 
     @bot_instance.message_handler(commands=["start", "s"], restrict=True)
@@ -309,7 +311,8 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         Start the conversation and ask user for input.
         Initialize with options to fill in.
         """
-        await bot_instance.set_state(message.from_user.id, Action.start)
+        di["state"] = message.from_user.id
+        await bot_instance.set_state(di["state"], Action.start)
         di[TransactionData]["Date"] = DateUtil.date_today()
         di["current_trx_message"] = await bot_instance.send_message(
             message.chat.id,
