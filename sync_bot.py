@@ -22,7 +22,7 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         di[TransactionData].reset()
         message = di["current_trx_message"]
-        bot_instance.delete_state(message.chat.id)
+        bot_instance.delete_state(message.from_user.id)
         bot_instance.edit_message_text(
             chat_id=message.chat.id,
             message_id=message.id,
@@ -37,7 +37,7 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Clears state and upload transaction to sheets
         """
-        bot_instance.delete_state(message.chat.id)
+        bot_instance.delete_state(message.from_user.id)
         upload(message)
 
     @bot_instance.message_handler(
@@ -47,12 +47,12 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Saves user input to selected option
         """
-        current_action = bot_instance.get_state(message.chat.id)
+        current_action = bot_instance.get_state(message.from_user.id)
         di[TransactionData][current_action.name.capitalize()] = message.text
         item_selected(current_action, di["current_trx_message"])
 
     def quick_save(message: types.Message):
-        bot_instance.set_state(message.chat.id, Action.quick_end)
+        bot_instance.set_state(message.from_user.id, Action.quick_end)
         di["current_trx_message"] = bot_instance.send_message(
             chat_id=message.chat.id,
             text="Current Transaction:",
@@ -81,8 +81,8 @@ def sync_bot_functions(bot_instance: TeleBot):
         Add income transaction using Today's date, Inflow Amount and Memo
         """
         di[TransactionData].reset()
-        if bot_instance.get_state(message.chat.id):
-            bot_instance.delete_state(message.chat.id)
+        if bot_instance.get_state(message.from_user.id):
+            bot_instance.delete_state(message.from_user.id)
 
         text = message.text
         result = list(shlex.split(text))
@@ -106,8 +106,8 @@ def sync_bot_functions(bot_instance: TeleBot):
         Add expense transaction using Today's date, Outflow Amount and Memo
         """
         di[TransactionData].reset()
-        if bot_instance.get_state(message.chat.id):
-            bot_instance.delete_state(message.chat.id)
+        if bot_instance.get_state(message.from_user.id):
+            bot_instance.delete_state(message.from_user.id)
 
         text = message.text
         result = list(shlex.split(text))
@@ -132,7 +132,7 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Return to category groups selection menu
         """
-        bot_instance.set_state(call.message.chat.id, Action.category)
+        bot_instance.set_state(call.message.from_user.id, Action.category)
         category_select_start(call.message)
 
     def category_select_start(message: types.Message):
@@ -166,7 +166,7 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Process item selected through /start command
         """
-        bot_instance.set_state(message.chat.id, action)
+        bot_instance.set_state(message.from_user.id, action)
         data = di[TransactionData][action.name.capitalize()]
 
         if action == Action.outflow or action == Action.inflow:
@@ -256,7 +256,7 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Show categories as InlineKeyboard
         """
-        bot_instance.set_state(call.message.chat.id, Action.category_list)
+        bot_instance.set_state(call.message.from_user.id, Action.category_list)
         action, choice = aspire_util.separate_callback_data(call.data)
         bot_instance.edit_message_text(
             chat_id=call.message.chat.id,
@@ -282,7 +282,7 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Return to main menu of /start command showing new saved values
         """
-        bot_instance.set_state(call.message.chat.id, Action.start)
+        bot_instance.set_state(call.message.from_user.id, Action.start)
         bot_instance.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
@@ -297,7 +297,7 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Clears state and upload to sheets for quick add functions
         """
-        bot_instance.delete_state(call.message.chat.id)
+        bot_instance.delete_state(call.message.from_user.id)
         upload(call.message)
 
     @bot_instance.message_handler(commands=["start", "s"], restrict=True)
@@ -306,7 +306,7 @@ def sync_bot_functions(bot_instance: TeleBot):
         Start the conversation and ask user for input.
         Initialize with options to fill in.
         """
-        bot_instance.set_state(message.chat.id, Action.start)
+        bot_instance.set_state(message.from_user.id, Action.start)
         di[TransactionData]["Date"] = DateUtil.date_today()
         di["current_trx_message"] = bot_instance.send_message(
             message.chat.id,
