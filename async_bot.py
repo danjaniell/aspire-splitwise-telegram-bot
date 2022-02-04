@@ -83,8 +83,6 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         di["state"] = message.from_user.id
         di[TransactionData].reset()
-        if await bot_instance.get_state(di["state"]):
-            await bot_instance.delete_state(di["state"])
 
         text = message.text
         result = list(shlex.split(text))
@@ -97,10 +95,15 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             return
         else:
             inflow, memo = result
-            di[TransactionData]["Date"] = DateUtil.date_today()
-            di[TransactionData]["Inflow"] = inflow
-            di[TransactionData]["Memo"] = memo
-        await async_quick_save(message)
+            try:
+                inflow = float(inflow)
+            except ValueError:
+                await async_invalid_amt(message)
+            else:
+                di[TransactionData]["Date"] = DateUtil.date_today()
+                di[TransactionData]["Inflow"] = inflow
+                di[TransactionData]["Memo"] = memo
+                await async_quick_save(message)
 
     @bot_instance.message_handler(regexp="^(A|a)dd(E|e)xp.+$", restrict=True)
     async def async_expense_trx(message: types.Message):
@@ -109,8 +112,6 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         """
         di["state"] = message.from_user.id
         di[TransactionData].reset()
-        if await bot_instance.get_state(di["state"]):
-            await bot_instance.delete_state(di["state"])
 
         text = message.text
         result = list(shlex.split(text))
@@ -123,10 +124,15 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
             return
         else:
             outflow, memo = result
-            di[TransactionData]["Date"] = DateUtil.date_today()
-            di[TransactionData]["Outflow"] = outflow
-            di[TransactionData]["Memo"] = memo
-        await async_quick_save(message)
+            try:
+                outflow = float(outflow)
+            except ValueError:
+                await async_invalid_amt(message)
+            else:
+                di[TransactionData]["Date"] = DateUtil.date_today()
+                di[TransactionData]["Outflow"] = outflow
+                di[TransactionData]["Memo"] = memo
+                await async_quick_save(message)
 
     @bot_instance.callback_query_handler(
         func=lambda c: c.data == "back;category", state=Action.category_list

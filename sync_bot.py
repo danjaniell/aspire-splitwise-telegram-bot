@@ -80,9 +80,8 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Add income transaction using Today's date, Inflow Amount and Memo
         """
+        di["state"] = message.from_user.id
         di[TransactionData].reset()
-        if bot_instance.get_state(di["state"]):
-            bot_instance.delete_state(di["state"])
 
         text = message.text
         result = list(shlex.split(text))
@@ -95,19 +94,23 @@ def sync_bot_functions(bot_instance: TeleBot):
             return
         else:
             inflow, memo = result
-            di[TransactionData]["Date"] = DateUtil.date_today()
-            di[TransactionData]["Inflow"] = inflow
-            di[TransactionData]["Memo"] = memo
-        quick_save(message)
+            try:
+                inflow = float(inflow)
+            except ValueError:
+                invalid_amt(message)
+            else:
+                di[TransactionData]["Date"] = DateUtil.date_today()
+                di[TransactionData]["Inflow"] = inflow
+                di[TransactionData]["Memo"] = memo
+                quick_save(message)
 
     @bot_instance.message_handler(regexp="^(A|a)dd(E|e)xp.+$", restrict=True)
     def expense_trx(message: types.Message):
         """
         Add expense transaction using Today's date, Outflow Amount and Memo
         """
+        di["state"] = message.from_user.id
         di[TransactionData].reset()
-        if bot_instance.get_state(di["state"]):
-            bot_instance.delete_state(di["state"])
 
         text = message.text
         result = list(shlex.split(text))
@@ -120,10 +123,15 @@ def sync_bot_functions(bot_instance: TeleBot):
             return
         else:
             outflow, memo = result
-            di[TransactionData]["Date"] = DateUtil.date_today()
-            di[TransactionData]["Outflow"] = outflow
-            di[TransactionData]["Memo"] = memo
-        quick_save(message)
+            try:
+                outflow = float(outflow)
+            except ValueError:
+                invalid_amt(message)
+            else:
+                di[TransactionData]["Date"] = DateUtil.date_today()
+                di[TransactionData]["Outflow"] = outflow
+                di[TransactionData]["Memo"] = memo
+                quick_save(message)
 
     @bot_instance.callback_query_handler(
         func=lambda c: c.data == "back;category", state=Action.category_list
