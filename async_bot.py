@@ -1,4 +1,3 @@
-import shlex
 import aspire_util
 from kink.errors.service_error import ServiceError
 from kink import di
@@ -6,7 +5,7 @@ from app_config import Configuration
 from telebot.async_telebot import AsyncTeleBot
 from telebot.callback_data import CallbackData
 from telebot import types
-from services import Action, TransactionData, DateUtil, KeyboardUtil
+from services import Action, TextUtil, TransactionData, DateUtil, KeyboardUtil
 from gspread import Spreadsheet
 
 
@@ -94,8 +93,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         di["state"] = message.from_user.id
         di[TransactionData].reset()
 
-        text = message.text
-        result = list(shlex.split(text))
+        result = TextUtil.text_splitter(message.text)
         del result[0]
         paramCount = len(result)
         if paramCount != 2:
@@ -131,8 +129,7 @@ def async_bot_functions(bot_instance: AsyncTeleBot):
         di["state"] = message.from_user.id
         di[TransactionData].reset()
 
-        text = message.text
-        result = list(shlex.split(text))
+        result = TextUtil.text_splitter(message.text)
         del result[0]
         paramCount = len(result)
         if paramCount != 2:

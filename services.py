@@ -1,5 +1,6 @@
 import platform
 import telebot
+import shlex
 from app_config import Configuration
 from datetime import datetime
 from telebot import TeleBot
@@ -96,7 +97,7 @@ class Action(IntEnum):
     category_end = 301
 
 
-class Formatting:
+class TextUtil:
     def format_data(self, user_data: Dict[str, str]) -> str:
         """Helper function for formatting the gathered user info."""
         data = []
@@ -108,6 +109,13 @@ class Formatting:
             else:
                 data.append(f"*{key}* : {value}")
         return "\n".join(data).join(["\n", "\n"])
+
+    def text_splitter(text):
+        lex = shlex.shlex(text)
+        lex.quotes = '"'
+        lex.whitespace_split = True
+        lex.commenters = ""
+        return list(lex)
 
 
 class DateUtil:
