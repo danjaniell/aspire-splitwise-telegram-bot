@@ -7,7 +7,6 @@ from telebot.async_telebot import AsyncTeleBot
 from telebot.callback_data import CallbackData
 from logging import Logger
 from services import (
-    Formatting,
     BotFactory,
     TransactionData,
     KeyboardUtil,
@@ -78,7 +77,6 @@ def configure_services() -> None:
     di[TransactionData] = TransactionData(trx_data)
     di[CallbackData] = CallbackData("action_id", prefix="Action")
     di[KeyboardUtil] = KeyboardUtil()
-    di[Formatting] = Formatting()
     di[Client] = auth.service_account_from_dict(
         di[Configuration]["credentials_json"], scopes=scope
     )
