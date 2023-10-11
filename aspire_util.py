@@ -33,6 +33,8 @@ def get_all_categories(spreadsheet) -> dict[str, list]:
 def get_accounts(spreadsheet):
     worksheet = spreadsheet.worksheet("Configuration")
     accounts = worksheet.get("cfg_Accounts")
+    cards = worksheet.get("cfg_Cards")
+    accounts.extend(cards)
     return accounts
 
 
