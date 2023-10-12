@@ -1,6 +1,6 @@
-# aspire-telegram-async-bot
+# aspire-splitwise-telegram-bot
 
-A telegram bot that connects to [Aspire Budgeting](https://aspirebudget.com/).
+A telegram bot that connects to [Aspire Budgeting](https://aspirebudget.com/) and [Splitwise](splitwise.com) (WIP)
 
 To start creating a transactions:
 
@@ -19,7 +19,23 @@ More features will be added progressively.
 
 ## Usage
 
-Copy and rename `config.toml.example` to `config.toml` file needs to be filled in with your credentials.
+Configure .env:
+
+```
+export CURRENCY=₱
+export TOKEN=
+export UPDATE_MODE=webhook
+export APP_NAME=
+export RESTRICT_ACCESS=True
+export USER_IDS=
+export CREDENTIALS=
+export WORKSHEET_ID=
+export PORT=
+export SECRET=
+export RUN_ASYNC=False
+export GIT_WEBHOOK=
+export API_TOKEN=
+```
 
 1. Follow this [gspread docs](https://docs.gspread.org/en/latest/oauth2.html#for-bots-using-service-account) to get your API key and share spreadsheet access to the service account.
    Add the base64 encoded json string to _**crdentials_json**_
