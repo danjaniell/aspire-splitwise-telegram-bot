@@ -8,3 +8,4 @@ kink
 aiohttp
 telebot
 python-dotenv
+splitwise

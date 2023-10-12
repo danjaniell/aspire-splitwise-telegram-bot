@@ -66,10 +66,10 @@ class Configuration:
             config["webhook_base_url"] = "https://%s.herokuapp.com" % (
                 config["app_name"]
             )
-        elif ON_PYTHONANYWHERE:
-            config["webhook_base_url"] = "https://%s.pythonanywhere.com" % (
-                config["app_name"]
-            )
+
+        config["webhook_base_url"] = "https://%s.pythonanywhere.com" % (
+            config["app_name"]
+        )
 
         return config
 
