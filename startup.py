@@ -1,12 +1,12 @@
 import telebot
-import aspire_util
+import aspire.utils
 from kink import di
 from app_config import Configuration
 from telebot import TeleBot
 from telebot.async_telebot import AsyncTeleBot
 from telebot.callback_data import CallbackData
 from logging import Logger
-from services import (
+from aspire.services import (
     BotFactory,
     TransactionData,
     KeyboardUtil,
@@ -84,10 +84,12 @@ def configure_services() -> None:
     di["WEBHOOK_URL_BASE"] = di[Configuration]["webhook_base_url"]
     spreadsheet = di[Client].open_by_key(di[Configuration]["worksheet_id"])
     di[Spreadsheet] = spreadsheet
-    trx_categories = aspire_util.get_all_categories(spreadsheet)
+    trx_categories = aspire.utils.get_all_categories(spreadsheet)
     di["trx_categories"] = trx_categories
-    trx_accounts = [i for s in aspire_util.get_accounts(spreadsheet) for i in s]
+    trx_accounts = [i for s in aspire.utils.get_accounts(
+        spreadsheet) for i in s]
     di["trx_accounts"] = trx_accounts
     di["groups"] = ["group_sel;" + s for s in trx_categories.keys()]
-    di["categories"] = ["save;" + s for l in trx_categories.values() for s in l]
+    di["categories"] = ["save;" + s for l in trx_categories.values()
+                        for s in l]
     di["accounts"] = ["acc_sel;" + s for s in trx_accounts]

@@ -10,7 +10,8 @@ def get_all_categories(spreadsheet) -> dict[str, list]:
     values = worksheet.get("r_ConfigurationData")
 
     # Find groups and exclude credit card payments
-    groups = [i[1] for i in values if i[0] == "✦" and "Credit Card" not in i[1]]
+    groups = [i[1]
+              for i in values if i[0] == "✦" and "Credit Card" not in i[1]]
 
     # get categories from configuration worksheet
     categories = []
@@ -89,7 +90,8 @@ def create_calendar(year=None, month=None):
         row = []
         for day in week:
             if day == 0:
-                row.append(types.InlineKeyboardButton(" ", callback_data=data_ignore))
+                row.append(types.InlineKeyboardButton(
+                    " ", callback_data=data_ignore))
             else:
                 row.append(
                     types.InlineKeyboardButton(
@@ -104,12 +106,14 @@ def create_calendar(year=None, month=None):
     row = [
         types.InlineKeyboardButton(
             "<",
-            callback_data=create_calendar_callback_data("PREV-MONTH", year, month, day),
+            callback_data=create_calendar_callback_data(
+                "PREV-MONTH", year, month, day),
         ),
         types.InlineKeyboardButton(" ", callback_data=data_ignore),
         types.InlineKeyboardButton(
             ">",
-            callback_data=create_calendar_callback_data("NEXT-MONTH", year, month, day),
+            callback_data=create_calendar_callback_data(
+                "NEXT-MONTH", year, month, day),
         ),
     ]
     keyboard.append(row)
@@ -192,7 +196,8 @@ def create_category_callback_data(action, selection):
 
 
 def create_category_inline(options, action):
-    cats_keyboard = [list(options)[i : i + 2] for i in range(0, len(list(options)), 2)]
+    cats_keyboard = [list(options)[i: i + 2]
+                     for i in range(0, len(list(options)), 2)]
     for i, x in enumerate(cats_keyboard):
         for j, k in enumerate(x):
             cats_keyboard[i][j] = types.InlineKeyboardButton(
@@ -203,7 +208,8 @@ def create_category_inline(options, action):
             [
                 types.InlineKeyboardButton(
                     "< Back",
-                    callback_data=create_category_callback_data("back", "category"),
+                    callback_data=create_category_callback_data(
+                        "back", "category"),
                 )
             ]
         )
@@ -211,7 +217,8 @@ def create_category_inline(options, action):
 
 
 def create_account_inline(trx_accounts, action):
-    accs_keyboard = [trx_accounts[i : i + 2] for i in range(0, len(trx_accounts), 2)]
+    accs_keyboard = [trx_accounts[i: i + 2]
+                     for i in range(0, len(trx_accounts), 2)]
     for i, x in enumerate(accs_keyboard):
         for j, k in enumerate(x):
             accs_keyboard[i][j] = types.InlineKeyboardButton(

@@ -104,7 +104,8 @@ class TextUtil:
         for key, value in user_data.items():
             if key in ("Outflow", "Inflow") and value != "":
                 data.append(
-                    f"*{key}* : " + di[Configuration]["currency"] + f" {int(value):,}"
+                    f"*{key}* : " +
+                    di[Configuration]["currency"] + f" {int(value):,}"
                 )
             else:
                 data.append(f"*{key}* : {value}")
@@ -139,7 +140,8 @@ class KeyboardUtil:
     def create_save_keyboard(callback_data: str):
         return types.InlineKeyboardMarkup(
             keyboard=[
-                [types.InlineKeyboardButton(text="💾 Save", callback_data=callback_data)]
+                [types.InlineKeyboardButton(
+                    text="💾 Save", callback_data=callback_data)]
             ]
         )
 
@@ -147,9 +149,10 @@ class KeyboardUtil:
         """
         Menu keyboard for start command
         """
-        filtered_actions = list(filter(lambda x: x <= Action.cancel, list(Action)))
+        filtered_actions = list(
+            filter(lambda x: x <= Action.cancel, list(Action)))
         keyboard = [
-            filtered_actions[i : i + 2] for i in range(0, len(filtered_actions), 2)
+            filtered_actions[i: i + 2] for i in range(0, len(filtered_actions), 2)
         ]
         for i, x in enumerate(keyboard):
             for j, k in enumerate(x):
@@ -169,7 +172,8 @@ class KeyboardUtil:
                 btnList = [
                     types.InlineKeyboardButton(
                         text=action.name.capitalize(),
-                        callback_data=di[CallbackData].new(action_id=int(action)),
+                        callback_data=di[CallbackData].new(
+                            action_id=int(action)),
                     )
                 ]
             else:
@@ -190,7 +194,8 @@ class KeyboardUtil:
                 btnList = [
                     types.InlineKeyboardButton(
                         text=f"{displayData}",
-                        callback_data=di[CallbackData].new(action_id=int(action)),
+                        callback_data=di[CallbackData].new(
+                            action_id=int(action)),
                     )
                 ]
             keyboard.append(btnList)

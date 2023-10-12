@@ -7,8 +7,8 @@ from kink import di
 from app_config import Configuration
 from telebot.async_telebot import AsyncTeleBot
 from telebot import TeleBot, types
-from async_bot import async_bot_functions
-from sync_bot import sync_bot_functions
+from aspire.async_bot import async_bot_functions
+from aspire.sync_bot import sync_bot_functions
 
 # inject dependencies
 startup.configure_services()
@@ -28,7 +28,8 @@ if isinstance(di["bot_instance"], AsyncTeleBot):
         asyncio.run(di["bot_instance"].infinity_polling(skip_pending=True))
     elif di[Configuration]["update_mode"] == "webhook":
         asyncio.run(
-            di["bot_instance"].set_webhook(url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH)
+            di["bot_instance"].set_webhook(
+                url=WEBHOOK_URL_BASE + WEBHOOK_URL_PATH)
         )
 elif isinstance(di["bot_instance"], TeleBot):
     di["bot_instance"].delete_webhook(drop_pending_updates=True)
