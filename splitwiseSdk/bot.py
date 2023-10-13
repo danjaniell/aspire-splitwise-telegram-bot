@@ -5,8 +5,8 @@ from telebot.callback_data import CallbackData
 from telebot import TeleBot, types
 from splitwise import Splitwise
 from splitwise.user import ExpenseUser
-from shared.services import TransactionData
-from shared.services import TextUtil, Action
+from shared.services import TransactionData, TextUtil, Action, KeyboardUtil
+from shared.utils import *
 
 
 def bot_functions(bot_instance: TeleBot):
@@ -31,21 +31,38 @@ def bot_functions(bot_instance: TeleBot):
     def invalid_amt(message: types.Message):
         bot_instance.reply_to(message, "Please enter a number")
 
-    def save(message: types.Message):
+    def save(message: types.Message, amount: float, description: str):
         bot_instance.set_state(di["state"], Action.quick_end)
+        # create another function for this as callback
         friends = splitwise.getFriends()
-        reply_markup = types.InlineKeyboardMarkup(
-            get_keyboard_layout(splitwise, friends, column_size=3))
-
-        update.message.reply_text(
-            'Create new expense with',
-            reply_markup=reply_markup
+        bot_instance.edit_message_text(
+            chat_id=message.chat.id,
+            message_id=message.id,
+            text="Select friend:",
+            reply_markup=KeyboardUtil.get_keyboard_layout(
+                splitwise, friends, column_size=3),
         )
+        # need to access callback here
+        query = call.callback_query
+        friend_id = int(query.data)
+        id_name_mapping = get_id_name_mapping(splitwise)
+        name = id_name_mapping[friend_id]
+        bot_instance.reply_to(f'Expense to be created with <b>{name}</b> with amount <b>{di[Configuration]["currency"]}{amount}</b>'
+                              f' and description <b>{description}</b>', parse_mode=types.ParseMode.HTML)
 
-    @bot_instance.message_handler(regexp="^(A|a)dd(E|e)xps.+$", restrict=True)
+        query = bot_instance.callback_query
+        self_id = splitwise.getCurrentUser().getId()
+        splitwise.create_expense_object(
+            self_id, friend_id, amount, description)
+        bot_instance.edit_message_text(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            text='New expense created!')
+
+    @bot_instance.message_handler(regexp="^(A|a)dd(S|s)plit.+$", restrict=True)
     def expense_trx(message: types.Message):
         """
-        Add expense transaction using Today's date, Outflow Amount and Description
+        Add expense transaction using Today's date, Amount and Description
         """
         try:
             cancel_trx(di["current_trx_message"])
@@ -68,10 +85,10 @@ def bot_functions(bot_instance: TeleBot):
             )
             return
         else:
-            outflow, desc = result
+            amount, description = result
             try:
-                outflow = float(outflow)
+                amount = float(amount)
             except ValueError:
                 invalid_amt(message)
             else:
-                save(message)
+                save(message, amount, description)

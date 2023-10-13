@@ -201,6 +201,19 @@ class KeyboardUtil:
             keyboard.append(btnList)
         return types.InlineKeyboardMarkup(keyboard)
 
+    def get_keyboard_layout(splitwise, friends, column_size=2):
+        keyboard = []
+        row = []
+        for friend in friends:
+            name = f'{splitwise.get_friend_full_name(friend)}'
+            row.append(types.InlineKeyboardButton(
+                name, callback_data=friend.getId()))
+            if len(row) == column_size:
+                keyboard.append(row)
+                row = []
+        keyboard.append(row)
+        return keyboard
+
 
 def silence_event_loop_closed(func):
     @wraps(func)

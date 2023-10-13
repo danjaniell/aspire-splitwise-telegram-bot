@@ -3,6 +3,7 @@ import calendar
 import datetime
 from itertools import groupby
 from telebot import types
+from splitwise import Splitwise
 
 
 def get_all_categories(spreadsheet) -> dict[str, list]:
@@ -225,3 +226,13 @@ def create_account_inline(trx_accounts, action):
                 k, callback_data=create_category_callback_data(action, str(k))
             )
     return types.InlineKeyboardMarkup(accs_keyboard)
+
+
+def get_id_name_mapping(splitwise: Splitwise):
+    friends = splitwise.getFriends()
+    return {friend.getId(): f'{get_friend_full_name(friend)}' for friend in friends}
+
+
+def get_friend_full_name(friend):
+    first_name = friend.getFirstName()
+    return f'{first_name} {friend.getLastName()}' if friend.getLastName() is not None else first_name
