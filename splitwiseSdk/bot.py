@@ -5,8 +5,8 @@ from telebot.callback_data import CallbackData
 from telebot import TeleBot, types
 from splitwise import Splitwise
 from splitwise.user import ExpenseUser
-from aspire.services import TransactionData
-from aspire.services import TextUtil, Action
+from shared.services import TransactionData
+from shared.services import TextUtil, Action
 
 
 def bot_functions(bot_instance: TeleBot):

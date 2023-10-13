@@ -1,10 +1,10 @@
-import aspire.utils
+import shared.utils
 from kink.errors.service_error import ServiceError
 from kink import di
 from app_config import Configuration
 from telebot.callback_data import CallbackData
 from telebot import TeleBot, types
-from aspire.services import Action, TextUtil, TransactionData, DateUtil, KeyboardUtil
+from shared.services import Action, TextUtil, TransactionData, DateUtil, KeyboardUtil
 from gspread import Spreadsheet
 
 
@@ -72,7 +72,7 @@ def sync_bot_functions(bot_instance: TeleBot):
             di[TransactionData]["Account"],
             di[TransactionData]["Memo"],
         ]
-        aspire.utils.append_trx(di[Spreadsheet], upload_data)
+        shared.utils.append_trx(di[Spreadsheet], upload_data)
         di[TransactionData].reset()
         bot_instance.reply_to(message, "✅ Transaction Saved\n")
 
@@ -165,7 +165,7 @@ def sync_bot_functions(bot_instance: TeleBot):
             chat_id=message.chat.id,
             message_id=message.id,
             text="Select Group:",
-            reply_markup=aspire.utils.create_category_inline(
+            reply_markup=shared.utils.create_category_inline(
                 trx_categories.keys(), "group_sel"
             ),
         )
@@ -175,7 +175,7 @@ def sync_bot_functions(bot_instance: TeleBot):
             chat_id=message.chat.id,
             message_id=message.id,
             text="Select Account:",
-            reply_markup=aspire.utils.create_account_inline(
+            reply_markup=shared.utils.create_account_inline(
                 trx_accounts, "acc_sel"),
         )
 
@@ -184,7 +184,7 @@ def sync_bot_functions(bot_instance: TeleBot):
             chat_id=message.chat.id,
             message_id=message.id,
             text="Select Date:",
-            reply_markup=aspire.utils.create_calendar(),
+            reply_markup=shared.utils.create_calendar(),
         )
 
     def item_selected(action: Action, message: types.Message):
@@ -250,7 +250,7 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Get user selection and store to Category
         """
-        action, choice = aspire.utils.separate_callback_data(call.data)
+        action, choice = shared.utils.separate_callback_data(call.data)
         di[TransactionData]["Category"] = choice
         save_callback(call)
 
@@ -261,7 +261,7 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Read user input and store to Account
         """
-        action, choice = aspire.utils.separate_callback_data(call.data)
+        action, choice = shared.utils.separate_callback_data(call.data)
         di[TransactionData]["Account"] = choice
         save_callback(call)
 
@@ -270,7 +270,7 @@ def sync_bot_functions(bot_instance: TeleBot):
         """
         Read user selection from calendar and store to Date
         """
-        selected, date = aspire.utils.process_calendar_selection(
+        selected, date = shared.utils.process_calendar_selection(
             call, bot_instance)
         if selected:
             di[TransactionData]["Date"] = date.strftime("%m/%d/%Y")
@@ -284,12 +284,12 @@ def sync_bot_functions(bot_instance: TeleBot):
         Show categories as InlineKeyboard
         """
         bot_instance.set_state(di["state"], Action.category_list)
-        action, choice = aspire.utils.separate_callback_data(call.data)
+        action, choice = shared.utils.separate_callback_data(call.data)
         bot_instance.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.message_id,
             text="Select Category:",
-            reply_markup=aspire.utils.create_category_inline(
+            reply_markup=shared.utils.create_category_inline(
                 trx_categories[choice], "save"
             ),
         )
