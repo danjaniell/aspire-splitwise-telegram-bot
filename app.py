@@ -9,6 +9,7 @@ from telebot.async_telebot import AsyncTeleBot
 from telebot import TeleBot, types
 from aspire.async_bot import async_bot_functions
 from aspire.sync_bot import sync_bot_functions
+from splitwiseSdk.bot import bot_functions
 
 # inject dependencies
 startup.configure_services()
@@ -20,6 +21,8 @@ if di[Configuration]["run_async"]:
     async_bot_functions(di["bot_instance"])
 else:
     sync_bot_functions(di["bot_instance"])
+
+bot_functions(di["bot_instance"])
 
 if isinstance(di["bot_instance"], AsyncTeleBot):
     asyncio.run(di["bot_instance"].delete_webhook(drop_pending_updates=True))

@@ -21,6 +21,7 @@ from aspire.services import (
     AsyncActionsCallbackFilter,
 )
 from gspread import auth, Client, Spreadsheet
+from splitwise import Splitwise
 
 
 def configure_services() -> None:
@@ -93,3 +94,6 @@ def configure_services() -> None:
     di["categories"] = ["save;" + s for l in trx_categories.values()
                         for s in l]
     di["accounts"] = ["acc_sel;" + s for s in trx_accounts]
+
+    di["splitwise"] = Splitwise(
+        di[Configuration]["splitwise_key"], di[Configuration]["splitwise_secret"], api_key=di[Configuration]["splitwise_token"])

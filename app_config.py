@@ -26,6 +26,9 @@ class Configuration:
             "worksheet_id": "",
             "webhook_base_url": "",
             "run_async": True,
+            "splitwise_key": "",
+            "splitwise_secret": "",
+            "splitwise_token": ""
         }
 
         ON_HEROKU = os.getenv("ON_HEROKU", "False").lower() in ("true", "1")
@@ -70,6 +73,13 @@ class Configuration:
         config["webhook_base_url"] = "https://%s.pythonanywhere.com" % (
             config["app_name"]
         )
+
+        config["splitwise_key"] = os.environ.get(
+            "CONSUMER_KEY", "no_splitwise_key")
+        config["splitwise_secret"] = os.environ.get(
+            "CONSUMER_SECRET", "no_splitwise_secret")
+        config["splitwise_token"] = os.environ.get(
+            "SPLITWISE_TOKEN", "no_splitwise_token")
 
         return config
 
