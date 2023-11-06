@@ -107,3 +107,12 @@ def configure_services() -> None:
         None
     )
     di["sw_group"] = sw_group
+    sw_currencies = di["splitwise"].getCurrencies()
+    filtered_currencies = [
+        currency for currency in sw_currencies if currency.code in ["USD", "PHP", "KRW", "HKD", "SGD", "IDR", "THB"]]
+    di["sw_currencies"] = sorted(filtered_currencies, key=lambda x: x.code)
+    di["sw_currency"] = next(
+        (currency for currency in sw_currencies
+         if currency.code == "PHP"),
+        None
+    )

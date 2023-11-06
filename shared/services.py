@@ -100,6 +100,7 @@ class Action(IntEnum):
     category_end = 301
     sw_category_list = 400
     sw_set_group = 401
+    sw_set_currency = 402
 
 
 class TextUtil:

@@ -12,6 +12,7 @@ def bot_functions(bot_instance: TeleBot):
     splitwise: Splitwise = di["splitwise"]
     sw_categories = [category.name for category in di["sw_categories"]]
     sw_groups = [group.name for group in di["sw_groups"]]
+    sw_currencies = [currency.code for currency in di["sw_currencies"]]
     sw_subcategories = [subcategory.name for category in di["sw_categories"]
                         for subcategory in category.subcategories]
 
@@ -34,10 +35,11 @@ def bot_functions(bot_instance: TeleBot):
     @bot_instance.callback_query_handler(func=lambda c: c.data in sw_categories)
     def get_sw_subcategories(call: types.CallbackQuery):
         current_group = "<b>{}</b>".format(di["sw_group"].name)
+        currency_used = "<b>{}</b>".format(di["sw_currency"].unit)
         di["current_trx_message"] = bot_instance.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.id,
-            text=f'[{current_group}] Select subcategory:',
+            text=f'[{currency_used} in {current_group}] Select subcategory:',
             reply_markup=KeyboardUtil.create_subcategory_keyboard(call.data),
             parse_mode="HTML"
         )
@@ -59,6 +61,18 @@ def bot_functions(bot_instance: TeleBot):
         bot_instance.reply_to(
             call.message, f'✅ Transactions will now save to {call.data} group')
 
+    # TODO - apply state filtering
+    @bot_instance.callback_query_handler(func=lambda c: c.data in sw_currencies)
+    def selected_sw_currency(call: types.CallbackQuery):
+        sw_currency = next(
+            (currency for currency in di["sw_currencies"]
+             if currency.code == call.data),
+            None
+        )
+        di["sw_currency"] = sw_currency
+        bot_instance.reply_to(
+            call.message, f'✅ Transactions will use {call.data} currency')
+
     @bot_instance.message_handler(state=[Action.outflow, Action.inflow], is_digit=False)
     def invalid_amt(message: types.Message):
         bot_instance.reply_to(message, "Please enter a number")
@@ -72,7 +86,7 @@ def bot_functions(bot_instance: TeleBot):
     @bot_instance.message_handler(commands=["swgroup", "swg"], restrict=True)
     def set_sw_group(message: types.Message):
         """
-        Set which group to add expense to
+        Sets the group where transactions belong to
         """
         try:
             cancel_trx(di["current_trx_message"])
@@ -92,6 +106,31 @@ def bot_functions(bot_instance: TeleBot):
             text="Select group:",
             reply_markup=KeyboardUtil.create_sw_keyboard(
                 sw_groups, column_size=3),
+        )
+
+    @bot_instance.message_handler(commands=["swcurrency", "swc"], restrict=True)
+    def set_sw_currency(message: types.Message):
+        """
+        Set which currency to use for transactions
+        """
+        try:
+            cancel_trx(di["current_trx_message"])
+        except ServiceError as e:
+            print("No current transaction.")
+        except Exception as e:
+            error_msg = getattr(e, "message", repr(e))
+            if "Bad Request: message is not modified" in error_msg:
+                print("Previous transaction was already cancelled.")
+
+        di["state"] = message.from_user.id
+        di[TransactionData].reset()
+
+        bot_instance.set_state(di["state"], Action.sw_set_currency)
+        di["current_trx_message"] = bot_instance.send_message(
+            chat_id=message.chat.id,
+            text="Select currency:",
+            reply_markup=KeyboardUtil.create_sw_keyboard(
+                sw_currencies, column_size=4),
         )
 
     @bot_instance.message_handler(regexp="^(A|a)dd(S|s)plit.+$", restrict=True)
@@ -132,9 +171,10 @@ def bot_functions(bot_instance: TeleBot):
                 di[TransactionData]["Memo"] = description
 
                 current_group = "<b>{}</b>".format(di["sw_group"].name)
+                currency_used = "<b>{}</b>".format(di["sw_currency"].unit)
                 di["current_trx_message"] = bot_instance.send_message(
                     chat_id=message.chat.id,
-                    text=f'[{current_group}] Select category:',
+                    text=f'[{currency_used} in {current_group}] Select category:',
                     reply_markup=KeyboardUtil.create_sw_keyboard(
                         sw_categories),
                     parse_mode="HTML"

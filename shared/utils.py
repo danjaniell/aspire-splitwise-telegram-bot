@@ -261,19 +261,21 @@ def create_expense_object(splitwise: Splitwise, payer_id, payee_id, group_id, ca
         (subcat for c in di["sw_categories"] for subcat in c.subcategories if subcat.name == categoryName), None)
     expense.setCategory(category)
     expense.setGroupId(di["sw_group"].id)
+    expense.setSplitEqually(True)
+    expense.setCurrencyCode(di["sw_currency"].code)
 
-    payer = ExpenseUser()
-    payer.setId(payer_id)
-    payer.setPaidShare(amount)
-    payer.setOwedShare(0.00)
+    # payer = ExpenseUser()
+    # payer.setId(payer_id)
+    # payer.setPaidShare(amount)
+    # payer.setOwedShare(0.00)
 
-    payee = ExpenseUser()
-    payee.setId(payee_id)
-    payee.setPaidShare(0.00)
-    payee.setOwedShare(amount)
+    # payee = ExpenseUser()
+    # payee.setId(payee_id)
+    # payee.setPaidShare(0.00)
+    # payee.setOwedShare(amount)
 
-    users = [payer, payee]
-    expense.setUsers(users)
+    # users = [payer, payee]
+    # expense.setUsers(users)
     expense = splitwise.createExpense(expense)
 
     return expense
