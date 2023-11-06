@@ -1,15 +1,21 @@
-import startup
 import asyncio
+import os
 import time
+
 import flask
 from flask import Flask
 from kink import di
-from app_config import Configuration
-from telebot.async_telebot import AsyncTeleBot
 from telebot import TeleBot, types
+from telebot.async_telebot import AsyncTeleBot
+
+import startup
+from app_config import Configuration
 from aspire.async_bot import async_bot_functions
 from aspire.sync_bot import sync_bot_functions
 from splitwiseSdk.bot import bot_functions
+
+os.environ['HTTP_PROXY'] = ''
+os.environ['HTTPS_PROXY'] = ''
 
 # inject dependencies
 startup.configure_services()
