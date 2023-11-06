@@ -35,6 +35,11 @@ export SECRET=
 export RUN_ASYNC=False
 export GIT_WEBHOOK=
 export API_TOKEN=
+export CONSUMER_KEY=
+export CONSUMER_SECRET=
+export SPLITWISE_TOKEN=
+export FRIEND_ID=
+export GROUP_ID=
 ```
 
 1. Follow this [gspread docs](https://docs.gspread.org/en/latest/oauth2.html#for-bots-using-service-account) to get your API key and share spreadsheet access to the service account.
