@@ -1,7 +1,8 @@
-import os
-import toml
 import base64
 import json
+import os
+
+import toml
 from dotenv import load_dotenv
 
 
@@ -28,7 +29,9 @@ class Configuration:
             "run_async": True,
             "splitwise_key": "",
             "splitwise_secret": "",
-            "splitwise_token": ""
+            "splitwise_token": "",
+            "friend_id": "",
+            "group_id": ""
         }
 
         ON_HEROKU = os.getenv("ON_HEROKU", "False").lower() in ("true", "1")
@@ -38,6 +41,8 @@ class Configuration:
             "1",
         )
 
+        config["friend_id"] = os.environ.get("FRIEND_ID", "no_friend_id")
+        config["group_id"] = os.environ.get("GROUP_ID", "no_group_id")
         config["currency"] = os.environ.get("CURRENCY", "₱")
         config["port"] = int(os.environ.get("PORT", "8443"))
         config["token"] = os.environ.get("TOKEN", "no_token")

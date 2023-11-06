@@ -1,16 +1,22 @@
-from kink.errors.service_error import ServiceError
 from kink import di
-from app_config import Configuration
-from telebot.callback_data import CallbackData
-from telebot import TeleBot, types
+from kink.errors.service_error import ServiceError
 from splitwise import Splitwise
 from splitwise.user import ExpenseUser
-from shared.services import TransactionData, TextUtil, Action, KeyboardUtil
+from telebot import TeleBot, types
+from telebot.callback_data import CallbackData
+
+import shared.utils
+from app_config import Configuration
+from shared.services import (Action, DateUtil, KeyboardUtil, TextUtil,
+                             TransactionData)
 from shared.utils import *
 
 
 def bot_functions(bot_instance: TeleBot):
     splitwise: Splitwise = di["splitwise"]
+    sw_categories = [category.name for category in di["sw_categories"]]
+    sw_subcategories = [subcategory.name for category in di["sw_categories"]
+                        for subcategory in category.subcategories]
 
     @bot_instance.message_handler(state="*", commands=["cancel", "q"])
     def cancel_trx(message: types.Message):
@@ -27,37 +33,28 @@ def bot_functions(bot_instance: TeleBot):
             text="Transaction cancelled.",
         )
 
+    @bot_instance.callback_query_handler(func=lambda c: c.data in sw_categories)
+    def get_sw_subcategories(call: types.CallbackQuery):
+        di["current_trx_message"] = bot_instance.edit_message_text(
+            chat_id=call.message.chat.id,
+            message_id=call.message.id,
+            text="Select subcategory:",
+            reply_markup=KeyboardUtil.create_subcategory_keyboard(call.data),
+        )
+
+    @bot_instance.callback_query_handler(func=lambda c: c.data in sw_subcategories)
+    def selected_sw_category(call: types.CallbackQuery):
+        save(call.message, call.data)
+
     @bot_instance.message_handler(state=[Action.outflow, Action.inflow], is_digit=False)
     def invalid_amt(message: types.Message):
         bot_instance.reply_to(message, "Please enter a number")
 
-    def save(message: types.Message, amount: float, description: str):
+    def save(message: types.Message, category):
         bot_instance.set_state(di["state"], Action.quick_end)
-        # create another function for this as callback
-        friends = splitwise.getFriends()
-        bot_instance.edit_message_text(
-            chat_id=message.chat.id,
-            message_id=message.id,
-            text="Select friend:",
-            reply_markup=KeyboardUtil.get_keyboard_layout(
-                splitwise, friends, column_size=3),
-        )
-        # need to access callback here
-        query = call.callback_query
-        friend_id = int(query.data)
-        id_name_mapping = get_id_name_mapping(splitwise)
-        name = id_name_mapping[friend_id]
-        bot_instance.reply_to(f'Expense to be created with <b>{name}</b> with amount <b>{di[Configuration]["currency"]}{amount}</b>'
-                              f' and description <b>{description}</b>', parse_mode=types.ParseMode.HTML)
-
-        query = bot_instance.callback_query
-        self_id = splitwise.getCurrentUser().getId()
-        splitwise.create_expense_object(
-            self_id, friend_id, amount, description)
-        bot_instance.edit_message_text(
-            chat_id=query.message.chat_id,
-            message_id=query.message.message_id,
-            text='New expense created!')
+        create_expense_object(splitwise,
+                              di["self_id"], di["friend_id"], di["group_id"], category, di[TransactionData]["Outflow"], di[TransactionData]["Memo"])
+        bot_instance.reply_to(message, "✅ Transaction Saved\n")
 
     @bot_instance.message_handler(regexp="^(A|a)dd(S|s)plit.+$", restrict=True)
     def expense_trx(message: types.Message):
@@ -91,4 +88,14 @@ def bot_functions(bot_instance: TeleBot):
             except ValueError:
                 invalid_amt(message)
             else:
-                save(message, amount, description)
+                bot_instance.set_state(di["state"], Action.sw_category_list)
+                di[TransactionData]["Date"] = DateUtil.date_today()
+                di[TransactionData]["Outflow"] = amount
+                di[TransactionData]["Memo"] = description
+
+                di["current_trx_message"] = bot_instance.send_message(
+                    chat_id=message.chat.id,
+                    text="Select category:",
+                    reply_markup=KeyboardUtil.create_sw_category_keyboard(
+                        sw_categories),
+                )

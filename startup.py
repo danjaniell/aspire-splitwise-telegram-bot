@@ -1,27 +1,20 @@
+from logging import Logger
+
 import telebot
-import shared.utils
+from gspread import Client, Spreadsheet, auth
 from kink import di
-from app_config import Configuration
+from splitwise import Splitwise
 from telebot import TeleBot
 from telebot.async_telebot import AsyncTeleBot
 from telebot.callback_data import CallbackData
-from logging import Logger
-from shared.services import (
-    BotFactory,
-    TransactionData,
-    KeyboardUtil,
-    RestrictAccessFilter,
-    ExceptionHandler,
-    StateFilter,
-    IsDigitFilter,
-    ActionsCallbackFilter,
-    AsyncRestrictAccessFilter,
-    AsyncStateFilter,
-    AsyncIsDigitFilter,
-    AsyncActionsCallbackFilter,
-)
-from gspread import auth, Client, Spreadsheet
-from splitwise import Splitwise
+
+import shared.utils
+from app_config import Configuration
+from shared.services import (ActionsCallbackFilter, AsyncActionsCallbackFilter,
+                             AsyncIsDigitFilter, AsyncRestrictAccessFilter,
+                             AsyncStateFilter, BotFactory, ExceptionHandler,
+                             IsDigitFilter, KeyboardUtil, RestrictAccessFilter,
+                             StateFilter, TransactionData)
 
 
 def configure_services() -> None:
@@ -97,3 +90,8 @@ def configure_services() -> None:
 
     di["splitwise"] = Splitwise(
         di[Configuration]["splitwise_key"], di[Configuration]["splitwise_secret"], api_key=di[Configuration]["splitwise_token"])
+    di["self_id"] = di["splitwise"].getCurrentUser().getId()
+    di["friend_id"] = di[Configuration]["friend_id"]
+    di["group_id"] = di[Configuration]["group_id"]
+    sw_categories = di["splitwise"].getCategories()
+    di["sw_categories"] = sorted(sw_categories, key=lambda x: x.name)

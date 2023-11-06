@@ -1,9 +1,13 @@
-from gspread import utils
 import calendar
 import datetime
 from itertools import groupby
-from telebot import types
+
+from gspread import utils
+from kink import di
 from splitwise import Splitwise
+from splitwise.expense import Expense
+from splitwise.user import ExpenseUser
+from telebot import types
 
 
 def get_all_categories(spreadsheet) -> dict[str, list]:
@@ -37,7 +41,7 @@ def get_accounts(spreadsheet):
     accounts = worksheet.get("cfg_Accounts")
     cards = worksheet.get("cfg_Cards")
     accounts.extend(cards)
-    return accounts
+    return sorted(accounts)
 
 
 def append_trx(spreadsheet, data: list[str]):
@@ -228,6 +232,16 @@ def create_account_inline(trx_accounts, action):
     return types.InlineKeyboardMarkup(accs_keyboard)
 
 
+def get_subcategories(categories, name):
+    subcategories = []
+    for category in categories:
+        if category.name == name:
+            subcategories = [
+                subcategory.name for subcategory in category.subcategories]
+            break
+    return subcategories
+
+
 def get_id_name_mapping(splitwise: Splitwise):
     friends = splitwise.getFriends()
     return {friend.getId(): f'{get_friend_full_name(friend)}' for friend in friends}
@@ -236,3 +250,29 @@ def get_id_name_mapping(splitwise: Splitwise):
 def get_friend_full_name(friend):
     first_name = friend.getFirstName()
     return f'{first_name} {friend.getLastName()}' if friend.getLastName() is not None else first_name
+
+
+def create_expense_object(splitwise: Splitwise, payer_id, payee_id, group_id, categoryName, amount, description):
+    expense = Expense()
+    expense.setCost(amount)
+    expense.setDescription(description)
+    expense.setGroupId(group_id)
+    category = next(
+        (subcat for c in di["sw_categories"] for subcat in c.subcategories if subcat.name == categoryName), None)
+    expense.setCategory(category)
+
+    payer = ExpenseUser()
+    payer.setId(payer_id)
+    payer.setPaidShare(amount)
+    payer.setOwedShare(0.00)
+
+    payee = ExpenseUser()
+    payee.setId(payee_id)
+    payee.setPaidShare(0.00)
+    payee.setOwedShare(amount)
+
+    users = [payer, payee]
+    expense.setUsers(users)
+    expense = splitwise.createExpense(expense)
+
+    return expense

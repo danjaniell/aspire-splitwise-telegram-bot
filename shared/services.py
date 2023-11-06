@@ -1,27 +1,30 @@
 import platform
-import telebot
 import shlex
-from app_config import Configuration
-from datetime import datetime
-from telebot import TeleBot
-from telebot.async_telebot import AsyncTeleBot
-from telebot.custom_filters import SimpleCustomFilter
-from telebot.custom_filters import StateFilter
-from telebot.custom_filters import IsDigitFilter
-from telebot.custom_filters import AdvancedCustomFilter
-from telebot.asyncio_filters import SimpleCustomFilter as AsyncSimpleCustomFilter
-from telebot.asyncio_filters import StateFilter as AsyncStateFilter
-from telebot.asyncio_filters import IsDigitFilter as AsyncIsDigitFilter
-from telebot.asyncio_filters import AdvancedCustomFilter as AsyncAdvancedCustomFilter
-from telebot.callback_data import CallbackData, CallbackDataFilter
-from telebot import types
-from kink import di
-from enum import IntEnum
-from zoneinfo import ZoneInfo
-from typing import Any, Dict
-from logging import Logger
-from functools import wraps
 from asyncio.proactor_events import _ProactorBasePipeTransport
+from datetime import datetime
+from enum import IntEnum
+from functools import wraps
+from logging import Logger
+from typing import Any, Dict
+from zoneinfo import ZoneInfo
+
+import pytz
+import telebot
+from kink import di
+from telebot import TeleBot, types
+from telebot.async_telebot import AsyncTeleBot
+from telebot.asyncio_filters import \
+    AdvancedCustomFilter as AsyncAdvancedCustomFilter
+from telebot.asyncio_filters import IsDigitFilter as AsyncIsDigitFilter
+from telebot.asyncio_filters import \
+    SimpleCustomFilter as AsyncSimpleCustomFilter
+from telebot.asyncio_filters import StateFilter as AsyncStateFilter
+from telebot.callback_data import CallbackData, CallbackDataFilter
+from telebot.custom_filters import (AdvancedCustomFilter, IsDigitFilter,
+                                    SimpleCustomFilter, StateFilter)
+
+from app_config import Configuration
+from shared.utils import *
 
 
 class ExceptionHandler(telebot.ExceptionHandler):
@@ -95,6 +98,7 @@ class Action(IntEnum):
     quick_end = 200
     category_list = 300
     category_end = 301
+    sw_category_list = 400
 
 
 class TextUtil:
@@ -121,7 +125,8 @@ class TextUtil:
 
 class DateUtil:
     def date_today() -> str:
-        today = datetime.now(tz=ZoneInfo("Hongkong"))
+        ph_tz = pytz.timezone('Asia/Manila')
+        today = datetime.datetime.now(tz=ph_tz)
         today = str(today.strftime("%m/%d/%y"))
         return today
 
@@ -201,18 +206,34 @@ class KeyboardUtil:
             keyboard.append(btnList)
         return types.InlineKeyboardMarkup(keyboard)
 
-    def get_keyboard_layout(splitwise, friends, column_size=2):
+    def create_sw_friend_keyboard(friends, column_size=3):
         keyboard = []
         row = []
         for friend in friends:
-            name = f'{splitwise.get_friend_full_name(friend)}'
+            name = f"{get_friend_full_name(friend)}"
             row.append(types.InlineKeyboardButton(
                 name, callback_data=friend.getId()))
             if len(row) == column_size:
                 keyboard.append(row)
                 row = []
         keyboard.append(row)
-        return keyboard
+        return types.InlineKeyboardMarkup(keyboard)
+
+    def create_sw_category_keyboard(categories, column_size=2):
+        keyboard = []
+        row = []
+        for category in categories:
+            row.append(types.InlineKeyboardButton(
+                category, callback_data=category))
+            if len(row) == column_size:
+                keyboard.append(row)
+                row = []
+        keyboard.append(row)
+        return types.InlineKeyboardMarkup(keyboard)
+
+    def create_subcategory_keyboard(category_name, column_size=3):
+        subcategories = get_subcategories(di["sw_categories"], category_name)
+        return KeyboardUtil.create_sw_category_keyboard(subcategories, column_size)
 
 
 def silence_event_loop_closed(func):
