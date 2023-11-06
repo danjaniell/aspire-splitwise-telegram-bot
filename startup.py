@@ -89,9 +89,21 @@ def configure_services() -> None:
     di["accounts"] = ["acc_sel;" + s for s in trx_accounts]
 
     di["splitwise"] = Splitwise(
-        di[Configuration]["splitwise_key"], di[Configuration]["splitwise_secret"], api_key=di[Configuration]["splitwise_token"])
+        di[Configuration]["splitwise_key"],
+        di[Configuration]["splitwise_secret"],
+        api_key=di[Configuration]["splitwise_token"],
+    )
     di["self_id"] = di["splitwise"].getCurrentUser().getId()
     di["friend_id"] = di[Configuration]["friend_id"]
     di["group_id"] = di[Configuration]["group_id"]
     sw_categories = di["splitwise"].getCategories()
     di["sw_categories"] = sorted(sw_categories, key=lambda x: x.name)
+    sw_groups = di["splitwise"].getGroups()
+    di["sw_groups"] = [
+        group for group in sw_groups if group.name != "Non-group expenses"]
+    sw_group = next(
+        (group for group in di["splitwise"].getGroups()
+         if group.id == int(di["group_id"])),
+        None
+    )
+    di["sw_group"] = sw_group

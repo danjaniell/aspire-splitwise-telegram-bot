@@ -99,6 +99,7 @@ class Action(IntEnum):
     category_list = 300
     category_end = 301
     sw_category_list = 400
+    sw_set_group = 401
 
 
 class TextUtil:
@@ -219,7 +220,7 @@ class KeyboardUtil:
         keyboard.append(row)
         return types.InlineKeyboardMarkup(keyboard)
 
-    def create_sw_category_keyboard(categories, column_size=2):
+    def create_sw_keyboard(categories, column_size=2):
         keyboard = []
         row = []
         for category in categories:
@@ -233,7 +234,7 @@ class KeyboardUtil:
 
     def create_subcategory_keyboard(category_name, column_size=3):
         subcategories = get_subcategories(di["sw_categories"], category_name)
-        return KeyboardUtil.create_sw_category_keyboard(subcategories, column_size)
+        return KeyboardUtil.create_sw_keyboard(subcategories, column_size)
 
 
 def silence_event_loop_closed(func):

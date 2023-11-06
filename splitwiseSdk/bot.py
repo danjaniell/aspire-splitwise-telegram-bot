@@ -1,12 +1,8 @@
 from kink import di
 from kink.errors.service_error import ServiceError
 from splitwise import Splitwise
-from splitwise.user import ExpenseUser
 from telebot import TeleBot, types
-from telebot.callback_data import CallbackData
 
-import shared.utils
-from app_config import Configuration
 from shared.services import (Action, DateUtil, KeyboardUtil, TextUtil,
                              TransactionData)
 from shared.utils import *
@@ -15,6 +11,7 @@ from shared.utils import *
 def bot_functions(bot_instance: TeleBot):
     splitwise: Splitwise = di["splitwise"]
     sw_categories = [category.name for category in di["sw_categories"]]
+    sw_groups = [group.name for group in di["sw_groups"]]
     sw_subcategories = [subcategory.name for category in di["sw_categories"]
                         for subcategory in category.subcategories]
 
@@ -33,18 +30,34 @@ def bot_functions(bot_instance: TeleBot):
             text="Transaction cancelled.",
         )
 
+    # TODO - apply state filtering
     @bot_instance.callback_query_handler(func=lambda c: c.data in sw_categories)
     def get_sw_subcategories(call: types.CallbackQuery):
+        current_group = "<b>{}</b>".format(di["sw_group"].name)
         di["current_trx_message"] = bot_instance.edit_message_text(
             chat_id=call.message.chat.id,
             message_id=call.message.id,
-            text="Select subcategory:",
+            text=f'[{current_group}] Select subcategory:',
             reply_markup=KeyboardUtil.create_subcategory_keyboard(call.data),
+            parse_mode="HTML"
         )
 
+    # TODO - apply state filtering
     @bot_instance.callback_query_handler(func=lambda c: c.data in sw_subcategories)
     def selected_sw_category(call: types.CallbackQuery):
         save(call.message, call.data)
+
+    # TODO - apply state filtering
+    @bot_instance.callback_query_handler(func=lambda c: c.data in sw_groups)
+    def selected_sw_group(call: types.CallbackQuery):
+        sw_group = next(
+            (group for group in di["splitwise"].getGroups()
+             if group.name == call.data),
+            None
+        )
+        di["sw_group"] = sw_group
+        bot_instance.reply_to(
+            call.message, f'✅ Transactions will now save to {call.data} group')
 
     @bot_instance.message_handler(state=[Action.outflow, Action.inflow], is_digit=False)
     def invalid_amt(message: types.Message):
@@ -55,6 +68,31 @@ def bot_functions(bot_instance: TeleBot):
         create_expense_object(splitwise,
                               di["self_id"], di["friend_id"], di["group_id"], category, di[TransactionData]["Outflow"], di[TransactionData]["Memo"])
         bot_instance.reply_to(message, "✅ Transaction Saved\n")
+
+    @bot_instance.message_handler(commands=["swgroup", "swg"], restrict=True)
+    def set_sw_group(message: types.Message):
+        """
+        Set which group to add expense to
+        """
+        try:
+            cancel_trx(di["current_trx_message"])
+        except ServiceError as e:
+            print("No current transaction.")
+        except Exception as e:
+            error_msg = getattr(e, "message", repr(e))
+            if "Bad Request: message is not modified" in error_msg:
+                print("Previous transaction was already cancelled.")
+
+        di["state"] = message.from_user.id
+        di[TransactionData].reset()
+
+        bot_instance.set_state(di["state"], Action.sw_set_group)
+        di["current_trx_message"] = bot_instance.send_message(
+            chat_id=message.chat.id,
+            text="Select group:",
+            reply_markup=KeyboardUtil.create_sw_keyboard(
+                sw_groups, column_size=3),
+        )
 
     @bot_instance.message_handler(regexp="^(A|a)dd(S|s)plit.+$", restrict=True)
     def expense_trx(message: types.Message):
@@ -93,9 +131,11 @@ def bot_functions(bot_instance: TeleBot):
                 di[TransactionData]["Outflow"] = amount
                 di[TransactionData]["Memo"] = description
 
+                current_group = "<b>{}</b>".format(di["sw_group"].name)
                 di["current_trx_message"] = bot_instance.send_message(
                     chat_id=message.chat.id,
-                    text="Select category:",
-                    reply_markup=KeyboardUtil.create_sw_category_keyboard(
+                    text=f'[{current_group}] Select category:',
+                    reply_markup=KeyboardUtil.create_sw_keyboard(
                         sw_categories),
+                    parse_mode="HTML"
                 )

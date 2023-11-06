@@ -260,6 +260,7 @@ def create_expense_object(splitwise: Splitwise, payer_id, payee_id, group_id, ca
     category = next(
         (subcat for c in di["sw_categories"] for subcat in c.subcategories if subcat.name == categoryName), None)
     expense.setCategory(category)
+    expense.setGroupId(di["sw_group"].id)
 
     payer = ExpenseUser()
     payer.setId(payer_id)
